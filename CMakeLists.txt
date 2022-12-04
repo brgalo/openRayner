@@ -11,6 +11,14 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(libs/vk-bootstrap)
 
 
+#glfw
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(libs/glfw)
+
+
+
 #sourcecode
 add_subdirectory(src/host)
 

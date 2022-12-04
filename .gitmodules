@@ -1,3 +1,6 @@
 [submodule "libs/vk-bootstrap"]
 	path = libs/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap.git
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = https://github.com/glfw/glfw.git
