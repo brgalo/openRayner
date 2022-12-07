@@ -24,7 +24,7 @@ add_subdirectory(src/host)
 
 
 add_executable(app main.cpp)
-target_link_libraries(app renderer)
+target_link_libraries(app PUBLIC renderer Vulkan::Vulkan)
 include_directories(src/host)
 
 

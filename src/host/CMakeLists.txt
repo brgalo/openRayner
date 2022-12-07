@@ -3,5 +3,10 @@ add_library(renderer app.hpp
                      renderer.hpp
                      renderer.cpp
                      window.hpp
-                     window.cpp)
+                     window.cpp
+                     pipeline.cpp
+                     pipeline.hpp
+                     device.cpp
+                     device.hpp)
+                     
 target_link_libraries(renderer glfw)

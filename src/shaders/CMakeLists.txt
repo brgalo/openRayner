@@ -28,8 +28,6 @@ add_custom_target(
     DEPENDS ${SPIRV_BINARY_FILES}
 )
 
-
-
 #auto compile shaders and copy to bin/shaders
 #see src/shaders/CMakeLists.txt for more details
 add_dependencies(app Shaders)
