@@ -27,11 +27,14 @@ private:
   void createPipelineLayout();
   void createPipeline();
   void createCommandBuffers();
+  void freeCommandBuffers();
   void drawFrame();
+  void recreateSwapchain();
+  void recordCommandBuffer(int imageIdx);
 
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
-  SwapChain swapchain{device, window.getExtent()};
+  std::unique_ptr<SwapChain> swapchain;
   std::unique_ptr<Pipeline> graphicsPipeline;
   VkPipelineLayout pipelineLayout;
   std::vector<VkCommandBuffer> commandBuffers;

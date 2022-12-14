@@ -7,9 +7,6 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 find_package(Vulkan REQUIRED COMPONENTS glslc)
 
-# bootstrap device creation
-add_subdirectory(libs/vk-bootstrap)
-
 
 #glfw
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
