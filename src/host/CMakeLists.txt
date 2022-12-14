@@ -7,6 +7,8 @@ add_library(renderer app.hpp
                      pipeline.cpp
                      pipeline.hpp
                      device.cpp
-                     device.hpp)
+                     device.hpp
+                     swapchain.hpp
+                     swapchain.cpp)
                      
 target_link_libraries(renderer glfw)
