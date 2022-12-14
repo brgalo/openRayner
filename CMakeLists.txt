@@ -18,13 +18,17 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(libs/glfw)
 include_directories(libs/glfw/include)
 
+#glm
+add_subdirectory(libs/glm)
+
 
 #sourcecode
 add_subdirectory(src/host)
 
 
 add_executable(app main.cpp)
-target_link_libraries(app PUBLIC renderer Vulkan::Vulkan)
+target_link_libraries(app PRIVATE renderer
+                          PRIVATE Vulkan::Vulkan)
 include_directories(src/host)
 
 

@@ -3,6 +3,7 @@
 #include "pipeline.hpp"
 #include "swapchain.hpp"
 #include "window.hpp"
+#include "geometry.hpp"
 
 #include <memory>
 #include <vector>
@@ -18,10 +19,11 @@ public:
   Application();
   ~Application();
 
-  Application(const Window &) = delete;
-  Application &operator=(const Window &) = delete;
+  Application(const Application &) = delete;
+  Application &operator=(const Application &) = delete;
 
 private:
+  void loadModels();
   void createPipelineLayout();
   void createPipeline();
   void createCommandBuffers();
@@ -33,6 +35,7 @@ private:
   std::unique_ptr<Pipeline> graphicsPipeline;
   VkPipelineLayout pipelineLayout;
   std::vector<VkCommandBuffer> commandBuffers;
+  std::unique_ptr<Geometry> geometry;
 };
 
 } // namespace oray

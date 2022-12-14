@@ -1,9 +1,11 @@
 #include "pipeline.hpp"
+#include "geometry.hpp"
+#include <cassert>
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include <cassert>
 
 namespace oray {
 
@@ -46,7 +48,6 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
   assert(configInfo.renderPass != VK_NULL_HANDLE &&
          "Cannot create graphics pipeline:: no renderPass provided in "
          "configInfo");
-  
 
   createShaderModule(vertCode, &vertShaderModule);
   createShaderModule(fragCode, &fragShaderModule);
@@ -67,14 +68,20 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
   shaderStages[1].pNext = nullptr;
   shaderStages[1].pSpecializationInfo = nullptr;
 
+  auto bindingDescriptions = Geometry::Vertex::getBindingDescriptions();
+  auto attributeDescriptions = Geometry::Vertex::getAttributeDescriptions();
+
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr;
+  vertexInputInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+  vertexInputInfo.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(bindingDescriptions.size());
+  vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
-  VkPipelineViewportStateCreateInfo viewportInfo{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+  VkPipelineViewportStateCreateInfo viewportInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
   viewportInfo.viewportCount = 1;
   viewportInfo.pViewports = &configInfo.viewport;
   viewportInfo.scissorCount = 1;
@@ -119,7 +126,13 @@ void Pipeline::createShaderModule(const std::vector<char> &code,
   }
 }
 
-PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height) {
+void Pipeline::bind(VkCommandBuffer commandBuffer) {
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    graphicsPipeline);
+}
+
+PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width,
+                                                       uint32_t height) {
   PipelineConfigInfo configInfo{};
   configInfo.inputAssemblyInfo.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -153,19 +166,19 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t 
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
   configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-  configInfo.multisampleInfo.minSampleShading = 1.0f;           
-  configInfo.multisampleInfo.pSampleMask = nullptr;             
-  configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;  
+  configInfo.multisampleInfo.minSampleShading = 1.0f;
+  configInfo.multisampleInfo.pSampleMask = nullptr;
+  configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;
   configInfo.multisampleInfo.alphaToOneEnable = VK_FALSE;
 
   configInfo.colorBlendAttachment.colorWriteMask =
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
-  configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; 
+  configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
   configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-  configInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;            
-  configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; 
+  configInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+  configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
   configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
   configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
@@ -192,7 +205,7 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t 
   configInfo.depthStencilInfo.front = {};
   configInfo.depthStencilInfo.back = {};
 
-    return configInfo;
+  return configInfo;
 }
 
 } // namespace oray

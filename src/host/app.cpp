@@ -1,14 +1,18 @@
 #include "app.hpp"
 #include "GLFW/glfw3.h"
+#include "geometry.hpp"
 #include "pipeline.hpp"
+#include <array>
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 #include <vulkan/vulkan_core.h>
-#include <array>
 
 namespace oray {
 
 Application::Application() {
+  loadModels();
   createPipelineLayout();
   createPipeline();
   createCommandBuffers();
@@ -21,7 +25,16 @@ Application::~Application() {
 void Application::run() {
   while (!window.shoudClose()) {
     glfwPollEvents();
+    drawFrame();
   }
+
+  vkDeviceWaitIdle(device.device());
+}
+
+void Application::loadModels() {
+  std::vector<Geometry::Vertex> vertices{
+      {{0.0f, -.5f}}, {{0.5f, 0.5f}}, {{-.5f, 0.5f}}};
+  geometry = std::make_unique<Geometry>(device, vertices);
 }
 
 void Application::createPipelineLayout() {
@@ -43,9 +56,8 @@ void Application::createPipeline() {
                                                             swapchain.height());
   pipelineConfig.renderPass = swapchain.getRenderPass();
   pipelineConfig.pipelineLayout = pipelineLayout;
-  graphicsPipeline = std::make_unique<Pipeline>(device, "spv/shader.vert.spv",
-                                                "spv/shader.frag.spv",
-                                                pipelineConfig);
+  graphicsPipeline = std::make_unique<Pipeline>(
+      device, "spv/shader.vert.spv", "spv/shader.frag.spv", pipelineConfig);
 }
 void Application::createCommandBuffers() {
   commandBuffers.resize(swapchain.imageCount());
@@ -62,12 +74,13 @@ void Application::createCommandBuffers() {
 
   for (size_t i = 0; i < commandBuffers.size(); ++i) {
     VkCommandBufferBeginInfo beginInfo{
-        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
     if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
       throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    VkRenderPassBeginInfo renderPassInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+    VkRenderPassBeginInfo renderPassInfo{
+        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
     renderPassInfo.renderPass = swapchain.getRenderPass();
     renderPassInfo.framebuffer = swapchain.getFrameBuffer(i);
 
@@ -83,8 +96,27 @@ void Application::createCommandBuffers() {
 
     vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo,
                          VK_SUBPASS_CONTENTS_INLINE);
-    
+
+    graphicsPipeline->bind(commandBuffers[i]);
+    geometry->bind(commandBuffers[i]);
+    geometry->draw(commandBuffers[i]);
+
+    vkCmdEndRenderPass(commandBuffers[i]);
+    if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("failed to record command buffer!");
+    }
   }
-  };
-  void Application::drawFrame() {};
-} // namespace oray 
+};
+void Application::drawFrame() {
+  uint32_t imageIndex;
+  auto result = swapchain.acquireNextImage(&imageIndex);
+  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+    throw std::runtime_error("failed to aquire swapchain image!");
+  }
+  result =
+      swapchain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("failed to present swap chain image!");
+  }
+};
+} // namespace oray

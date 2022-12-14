@@ -9,6 +9,9 @@ add_library(renderer app.hpp
                      device.cpp
                      device.hpp
                      swapchain.hpp
-                     swapchain.cpp)
+                     swapchain.cpp
+                     geometry.hpp
+                     geometry.cpp)
                      
-target_link_libraries(renderer glfw)
+target_link_libraries(renderer PRIVATE glfw
+                               PRIVATE glm::glm)
