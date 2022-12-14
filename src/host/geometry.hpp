@@ -1,5 +1,6 @@
 #pragma once
 #include "device.hpp"
+#include "glm/fwd.hpp"
 #include <cstdint>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -13,6 +14,7 @@ class Geometry {
 public:
   struct Vertex {
     glm::vec2 position;
+    glm::vec3 color;
     static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
   };

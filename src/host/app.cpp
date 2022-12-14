@@ -32,8 +32,9 @@ void Application::run() {
 }
 
 void Application::loadModels() {
-  std::vector<Geometry::Vertex> vertices{
-      {{0.0f, -.5f}}, {{0.5f, 0.5f}}, {{-.5f, 0.5f}}};
+  std::vector<Geometry::Vertex> vertices{{{0.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
+                                         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+                                         {{-.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
   geometry = std::make_unique<Geometry>(device, vertices);
 }
 
