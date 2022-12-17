@@ -1,12 +1,13 @@
 #include "geometry.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include <cstring>
 
 namespace oray {
-Geometry::Geometry(Device &device, const std::vector<Vertex> &vertices) : device(device) {
+Geometry::Geometry(Device &device, const std::vector<Vertex> &vertices)
+    : device(device) {
   createVertexBuffers(vertices);
 }
 
@@ -49,7 +50,6 @@ Geometry::Vertex::getBindingDescriptions() {
   return bindingDescriptions;
 }
 
-
 std::vector<VkVertexInputAttributeDescription>
 Geometry::Vertex::getAttributeDescriptions() {
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions(2);
@@ -64,4 +64,4 @@ Geometry::Vertex::getAttributeDescriptions() {
   attributeDescriptions[1].offset = offsetof(Vertex, color);
   return attributeDescriptions;
 }
-}
+} // namespace oray

@@ -8,6 +8,8 @@ add_library(renderer app.hpp
                      camera.cpp
                      window.hpp
                      window.cpp
+                     keyboard.hpp
+                     keyboard.cpp
                      pipeline.cpp
                      pipeline.hpp
                      device.cpp

@@ -5,6 +5,8 @@
 #include "orayobject.hpp"
 #include "renderer.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -13,6 +15,8 @@ class Application {
 public:
   static constexpr uint32_t WIDTH = 800;
   static constexpr uint32_t HEIGHT = 600;
+  static constexpr float MAX_FRAME_TIME = 0.2;
+
   void run();
 
   Application();
