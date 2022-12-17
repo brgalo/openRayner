@@ -9,8 +9,14 @@ namespace oray {
 
 struct Transform2dComponent {
   glm::vec2 translation{};
-
-  glm::mat2 mat2() { return glm::mat2{1.0f}; }
+  glm::vec2 scale{1.0f, 1.0f};
+  float rotation = 0;
+  glm::mat2 mat2() {
+    const float s = glm::sin(rotation);
+    const float c = glm::cos(rotation);
+    glm::mat2 rotMat{{c,s},{-s,c}};
+    glm::mat2 scaleMat{{scale.x, 0.f}, {0.f, scale.y}};
+    return rotMat*scaleMat; }
 };
 
 class OrayObject {
