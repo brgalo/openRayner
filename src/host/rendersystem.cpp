@@ -68,7 +68,8 @@ void RenderSystem::createPipeline(VkRenderPass renderPass) {
 }
 
 void RenderSystem::renderOrayObjects(VkCommandBuffer commandBuffer,
-                                     std::vector<OrayObject> &orayObjects) {
+                                     std::vector<OrayObject> &orayObjects,
+                                     const Camera &camera) {
   graphicsPipeline->bind(commandBuffer);
 
   for (auto &obj : orayObjects) {
@@ -79,7 +80,8 @@ void RenderSystem::renderOrayObjects(VkCommandBuffer commandBuffer,
     
     SimplePushConstantData push{};
     push.color = obj.color;
-    push.transform = obj.transform.mat4();
+    push.transform = camera.getProjection() * obj.transform.mat4();
+    
     vkCmdPushConstants(commandBuffer, pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT | 
                            VK_SHADER_STAGE_FRAGMENT_BIT,

@@ -3,6 +3,7 @@
 #include "pipeline.hpp"
 #include "geometry.hpp"
 #include "orayobject.hpp"
+#include "camera.hpp"
 
 #include <memory>
 #include <vector>
@@ -16,7 +17,9 @@ public:
   RenderSystem(const RenderSystem &) = delete;
   RenderSystem &operator=(const RenderSystem &) = delete;
 
-  void renderOrayObjects(VkCommandBuffer commandBuffer, std::vector<OrayObject> &orayObejcts);
+  void renderOrayObjects(VkCommandBuffer commandBuffer,
+                         std::vector<OrayObject> &orayObjects,
+                         const Camera &camera);
 private:
   void createPipelineLayout();
   void createPipeline(VkRenderPass renderPass);

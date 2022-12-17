@@ -4,6 +4,8 @@ add_library(renderer app.hpp
                      renderer.cpp
                      rendersystem.hpp
                      rendersystem.cpp
+                     camera.hpp
+                     camera.cpp
                      window.hpp
                      window.cpp
                      pipeline.cpp

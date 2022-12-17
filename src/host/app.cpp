@@ -1,6 +1,7 @@
 #include "app.hpp"
 
 #include "rendersystem.hpp"
+#include "camera.hpp"
 #include <memory>
 
 #define GLM_FORCE_RADIANS
@@ -27,13 +28,18 @@ Application::~Application() {
 
 void Application::run() {
   RenderSystem renderSystem{device, renderer.getSwapchainRenderpass()};
+  Camera camera{};
 
   while (!window.shoudClose()) {
     glfwPollEvents();
 
+    float aspect = renderer.getAspectRatio();
+  //  camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
+    camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1, 10);
+
     if (auto commandBuffer = renderer.beginFrame()) {
       renderer.beginSwapchainRenderPass(commandBuffer);
-      renderSystem.renderOrayObjects(commandBuffer, orayObjects);
+      renderSystem.renderOrayObjects(commandBuffer, orayObjects, camera);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.endFrame();
     }
@@ -106,7 +112,7 @@ void Application::loadOrayObjects() {
 
   auto cube = OrayObject::createOrayObject();
   cube.geom = geometry;
-  cube.transform.translation = {.0f, .0f, .5f};
+  cube.transform.translation = {.0f, .0f, 2.5f};
   cube.transform.scale = {.5f, .5f, .5f};
   orayObjects.push_back(std::move(cube));
 }
