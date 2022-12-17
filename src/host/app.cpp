@@ -1,4 +1,10 @@
 #include "app.hpp"
+#include "glm/fwd.hpp"
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+
 #include "GLFW/glfw3.h"
 #include "geometry.hpp"
 #include "pipeline.hpp"
@@ -10,10 +16,18 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+
+
 namespace oray {
 
+struct SimplePushConstantData {
+  glm::mat2 transform{1.f};
+  glm::vec2 offset;
+  alignas(16) glm::vec3 color;
+};
+
 Application::Application() {
-  loadModels();
+  loadOrayObjects();
   createPipelineLayout();
   recreateSwapchain();
   createCommandBuffers();
@@ -32,20 +46,34 @@ void Application::run() {
   vkDeviceWaitIdle(device.device());
 }
 
-void Application::loadModels() {
+void Application::loadOrayObjects() {
   std::vector<Geometry::Vertex> vertices{{{0.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
                                          {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
                                          {{-.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
-  geometry = std::make_unique<Geometry>(device, vertices);
+  auto geometry = std::make_shared<Geometry>(device, vertices);
+
+  auto triangle = OrayObject::createOrayObject();
+  triangle.geom = geometry;
+  triangle.color = {.1f, 0.8f, 0.1f};
+
+  triangle.transform2d.translation.x = 0.2f;
+  orayObjects.push_back(std::move(triangle));
 }
 
 void Application::createPipelineLayout() {
-  VkPipelineLayoutCreateInfo pipelineLayoutInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+  VkPushConstantRange pushConstantRange{};
+  pushConstantRange.stageFlags =
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(SimplePushConstantData);
+
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount = 0;
   pipelineLayoutInfo.pSetLayouts = nullptr;
-  pipelineLayoutInfo.pushConstantRangeCount = 0;
-  pipelineLayoutInfo.pPushConstantRanges = nullptr;
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr,
                              &pipelineLayout) != VK_SUCCESS) {
@@ -67,8 +95,8 @@ void Application::createPipeline() {
 
 void Application::createCommandBuffers() {
   commandBuffers.resize(swapchain->imageCount());
-  VkCommandBufferAllocateInfo allocInfo{
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+  VkCommandBufferAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandPool = device.getCommandPool();
   allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
@@ -87,14 +115,15 @@ void Application::freeCommandBuffers() {
 }
 
 void Application::recordCommandBuffer(int imgIdx) {
-  VkCommandBufferBeginInfo beginInfo{
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+
+  VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     if (vkBeginCommandBuffer(commandBuffers[imgIdx], &beginInfo) != VK_SUCCESS) {
       throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    VkRenderPassBeginInfo renderPassInfo{
-        VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = swapchain->getRenderPass();
     renderPassInfo.framebuffer = swapchain->getFrameBuffer(imgIdx);
 
@@ -102,7 +131,7 @@ void Application::recordCommandBuffer(int imgIdx) {
     renderPassInfo.renderArea.extent = swapchain->getSwapChainExtent();
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+    clearValues[0].color = {{0.01f, 0.01f, 0.01f, 1.0f}};
     clearValues[1].depthStencil = {1.0f, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -123,14 +152,29 @@ void Application::recordCommandBuffer(int imgIdx) {
     vkCmdSetViewport(commandBuffers[imgIdx], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[imgIdx], 0, 1, &scissor);
 
-    graphicsPipeline->bind(commandBuffers[imgIdx]);
-    geometry->bind(commandBuffers[imgIdx]);
-    geometry->draw(commandBuffers[imgIdx]);
+    renderOrayObjects(commandBuffers[imgIdx]);
 
     vkCmdEndRenderPass(commandBuffers[imgIdx]);
     if (vkEndCommandBuffer(commandBuffers[imgIdx]) != VK_SUCCESS) {
       throw std::runtime_error("failed to record command buffer!");
     }
+}
+
+void Application::renderOrayObjects(VkCommandBuffer commandBuffer) {
+  graphicsPipeline->bind(commandBuffer);
+  for (auto &obj : orayObjects) {
+    SimplePushConstantData push{};
+    push.offset = obj.transform2d.translation;
+    push.color = obj.color;
+    push.transform = obj.transform2d.mat2();
+     vkCmdPushConstants(commandBuffer, pipelineLayout,
+                         VK_SHADER_STAGE_VERTEX_BIT |
+                             VK_SHADER_STAGE_FRAGMENT_BIT,
+                         0, sizeof(SimplePushConstantData), &push);
+     obj.geom->bind(commandBuffer);
+     obj.geom->draw(commandBuffer);
+  }
+
 }
 
 void Application::recreateSwapchain() {

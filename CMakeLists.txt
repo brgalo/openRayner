@@ -26,6 +26,13 @@ add_subdirectory(src/host)
 add_executable(app main.cpp)
 target_link_libraries(app PRIVATE renderer
                           PRIVATE Vulkan::Vulkan)
+
+#if(MSVC)
+#    target_compile_options(app PRIVATE /W4 /WX)
+#else()
+#    target_compile_options(app PRIVATE -Wall -Wextra -Wpedantic)
+#endif()
+
 include_directories(src/host)
 
 

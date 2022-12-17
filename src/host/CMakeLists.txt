@@ -11,7 +11,13 @@ add_library(renderer app.hpp
                      swapchain.hpp
                      swapchain.cpp
                      geometry.hpp
-                     geometry.cpp)
+                     geometry.cpp
+                     orayobject.hpp)
                      
 target_link_libraries(renderer PRIVATE glfw
                                PRIVATE glm::glm)
+#if(MSVC)
+#    target_compile_options(renderer PRIVATE /W4 /WX)
+#else()
+#    target_compile_options(renderer PRIVATE -Wall -Wextra -Wpedantic)
+#endif()

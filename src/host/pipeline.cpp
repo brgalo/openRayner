@@ -72,8 +72,8 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
   auto bindingDescriptions = Geometry::Vertex::getBindingDescriptions();
   auto attributeDescriptions = Geometry::Vertex::getAttributeDescriptions();
 
-  VkPipelineVertexInputStateCreateInfo vertexInputInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+  VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+  vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexAttributeDescriptionCount =
       static_cast<uint32_t>(attributeDescriptions.size());
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
@@ -81,8 +81,8 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
       static_cast<uint32_t>(bindingDescriptions.size());
   vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
 
-  VkGraphicsPipelineCreateInfo pipelineInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+  VkGraphicsPipelineCreateInfo pipelineInfo{};
+  pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipelineInfo.stageCount = 2;
   pipelineInfo.pStages = shaderStages;
   pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -109,8 +109,8 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
 
 void Pipeline::createShaderModule(const std::vector<char> &code,
                                   VkShaderModule *shaderModule) {
-  VkShaderModuleCreateInfo createInfo{
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+  VkShaderModuleCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = code.size();
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 

@@ -4,6 +4,7 @@
 #include "swapchain.hpp"
 #include "window.hpp"
 #include "geometry.hpp"
+#include "orayobject.hpp"
 
 #include <memory>
 #include <vector>
@@ -23,7 +24,7 @@ public:
   Application &operator=(const Application &) = delete;
 
 private:
-  void loadModels();
+  void loadOrayObjects();
   void createPipelineLayout();
   void createPipeline();
   void createCommandBuffers();
@@ -31,6 +32,7 @@ private:
   void drawFrame();
   void recreateSwapchain();
   void recordCommandBuffer(int imageIdx);
+  void renderOrayObjects(VkCommandBuffer commandBuffer);
 
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
@@ -38,7 +40,7 @@ private:
   std::unique_ptr<Pipeline> graphicsPipeline;
   VkPipelineLayout pipelineLayout;
   std::vector<VkCommandBuffer> commandBuffers;
-  std::unique_ptr<Geometry> geometry;
+  std::vector<OrayObject> orayObjects;
 };
 
 } // namespace oray
