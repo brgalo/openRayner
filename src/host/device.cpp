@@ -197,7 +197,7 @@ void Device::createCommandPool() {
 }
 
 void Device::createSurface() {
- window.createWindowSurface(instance, &surface_);
+  window.createWindowSurface(instance, &surface_);
 }
 
 bool Device::isDeviceSuitable(VkPhysicalDevice device) {
