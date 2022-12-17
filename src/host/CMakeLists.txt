@@ -18,7 +18,9 @@ add_library(renderer app.hpp
                      swapchain.cpp
                      geometry.hpp
                      geometry.cpp
-                     orayobject.hpp)
+                     orayobject.hpp
+                     orayobject.cpp
+                     utils.hpp)
                      
 target_link_libraries(renderer PRIVATE glfw
                                PRIVATE glm::glm)
