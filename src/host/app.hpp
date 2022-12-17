@@ -1,14 +1,12 @@
 #pragma once
 
-#include "pipeline.hpp"
-#include "swapchain.hpp"
 #include "window.hpp"
 #include "geometry.hpp"
 #include "orayobject.hpp"
+#include "renderer.hpp"
 
 #include <memory>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace oray {
 class Application {
@@ -25,21 +23,10 @@ public:
 
 private:
   void loadOrayObjects();
-  void createPipelineLayout();
-  void createPipeline();
-  void createCommandBuffers();
-  void freeCommandBuffers();
-  void drawFrame();
-  void recreateSwapchain();
-  void recordCommandBuffer(int imageIdx);
-  void renderOrayObjects(VkCommandBuffer commandBuffer);
 
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
-  std::unique_ptr<SwapChain> swapchain;
-  std::unique_ptr<Pipeline> graphicsPipeline;
-  VkPipelineLayout pipelineLayout;
-  std::vector<VkCommandBuffer> commandBuffers;
+  Renderer renderer{window, device};
   std::vector<OrayObject> orayObjects;
 };
 

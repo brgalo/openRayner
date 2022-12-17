@@ -7,6 +7,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -43,7 +44,11 @@ public:
   VkResult acquireNextImage(uint32_t *imageIndex);
   VkResult submitCommandBuffers(const VkCommandBuffer *buffers,
                                 uint32_t *imageIndex);
-
+  bool compareSwapFormats(const SwapChain &swapchain) const {
+    return swapchain.swapChainDepthFormat == swapChainDepthFormat &&
+           swapchain.swapChainImageFormat == swapChainImageFormat;
+  }
+  
 private:
   void init();
   void createSwapChain();
@@ -61,6 +66,7 @@ private:
   VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 
   VkFormat swapChainImageFormat;
+  VkFormat swapChainDepthFormat;
   VkExtent2D swapChainExtent;
 
   std::vector<VkFramebuffer> swapChainFramebuffers;

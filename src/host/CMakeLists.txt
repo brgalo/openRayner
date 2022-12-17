@@ -2,6 +2,8 @@ add_library(renderer app.hpp
                      app.cpp
                      renderer.hpp
                      renderer.cpp
+                     rendersystem.hpp
+                     rendersystem.cpp
                      window.hpp
                      window.cpp
                      pipeline.cpp
