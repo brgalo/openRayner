@@ -117,13 +117,13 @@ std::unique_ptr<Geometry> createCubeModel(Device& device, glm::vec3 offset) {
 }
 
 void Application::loadOrayObjects() {
-  std::shared_ptr<Geometry> geometry = createCubeModel(device, {.0f, .0f, .0f});
+  std::shared_ptr<Geometry> geometry = Geometry::createModelFromFile(device, "models/smooth_vase.obj");
 
-  auto cube = OrayObject::createOrayObject();
-  cube.geom = geometry;
-  cube.transform.translation = {.0f, .0f, 2.5f};
-  cube.transform.scale = {.5f, .5f, .5f};
-  orayObjects.push_back(std::move(cube));
+  auto orayObj = OrayObject::createOrayObject();
+  orayObj.geom = geometry;
+  orayObj.transform.translation = {.0f, .0f, 2.5f};
+  orayObj.transform.scale = {3.f, 3.f, 3.f};
+  orayObjects.push_back(std::move(orayObj));
 }
 
 } // namespace oray

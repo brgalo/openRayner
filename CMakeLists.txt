@@ -18,6 +18,8 @@ include_directories(libs/glfw/include)
 #glm
 add_subdirectory(libs/glm)
 
+#tiny obj loader
+set(TINY_OBJ_PATH "${PROJECT_SOURCE_DIR}/libs/tinyobjloader")
 
 #sourcecode
 add_subdirectory(src/host)
