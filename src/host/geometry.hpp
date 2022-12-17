@@ -15,11 +15,13 @@ public:
   struct Vertex {
     glm::vec3 position;
     glm::vec3 color;
-    static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+    static std::vector<VkVertexInputBindingDescription>
+    getBindingDescriptions();
+    static std::vector<VkVertexInputAttributeDescription>
+    getAttributeDescriptions();
   };
 
-  Geometry(Device& device, const std::vector<Vertex> &vertices);
+  Geometry(Device &device, const std::vector<Vertex> &vertices);
   ~Geometry();
 
   Geometry(const Geometry &) = delete;
@@ -35,4 +37,4 @@ private:
   VkDeviceMemory vertexBufferMemory;
   uint32_t vertexCount;
 };
-}
+} // namespace oray

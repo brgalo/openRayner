@@ -1,8 +1,8 @@
 #pragma once
 
+#include "geometry.hpp"
 #include "swapchain.hpp"
 #include "window.hpp"
-#include "geometry.hpp"
 
 #include <cassert>
 #include <memory>
@@ -21,14 +21,15 @@ public:
   VkRenderPass getSwapchainRenderpass() const {
     return swapchain->getRenderPass();
   };
-  float getAspectRatio() const {return swapchain->extentAspectRatio();};
-  bool isFrameInProgress() const {return isFrameStarted;};
+  float getAspectRatio() const { return swapchain->extentAspectRatio(); };
+  bool isFrameInProgress() const { return isFrameStarted; };
 
   VkCommandBuffer getCurrentCommandBuffer() const {
-    assert(isFrameStarted && "cannot get command buffer when frame is not started!");
+    assert(isFrameStarted &&
+           "cannot get command buffer when frame is not started!");
     return commandBuffers[currentFrameIdx];
   }
-  
+
   VkCommandBuffer beginFrame();
   void endFrame();
   void beginSwapchainRenderPass(VkCommandBuffer commandBuffer);
@@ -46,8 +47,8 @@ private:
   void drawFrame();
   void recreateSwapchain();
 
-  Window& window;
-  Device& device;
+  Window &window;
+  Device &device;
   std::unique_ptr<SwapChain> swapchain;
   std::vector<VkCommandBuffer> commandBuffers;
 

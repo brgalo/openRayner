@@ -53,11 +53,11 @@ void Renderer::recreateSwapchain() {
     swapchain = std::make_unique<SwapChain>(device, extent);
   } else {
     std::shared_ptr<SwapChain> oldSwapchain = std::move(swapchain);
-    swapchain =
-        std::make_unique<SwapChain>(device, extent, oldSwapchain);
+    swapchain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
 
     if (!oldSwapchain->compareSwapFormats(*swapchain.get())) {
-      throw std::runtime_error("swap chain image (or depth) format has changed!");
+      throw std::runtime_error(
+          "swap chain image (or depth) format has changed!");
     }
   }
   // if render pass compatible, dont do anything else
@@ -104,8 +104,7 @@ void Renderer::endFrame() {
       window.wasWindowResized()) {
     window.resetWindowResizedFlag();
     recreateSwapchain();
-  }
-  else if (result != VK_SUCCESS) {
+  } else if (result != VK_SUCCESS) {
     throw std::runtime_error("failed to present swap chain image!");
   }
 

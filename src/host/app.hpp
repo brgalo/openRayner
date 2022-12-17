@@ -1,9 +1,9 @@
 #pragma once
 
-#include "window.hpp"
 #include "geometry.hpp"
 #include "orayobject.hpp"
 #include "renderer.hpp"
+#include "window.hpp"
 
 #include <chrono>
 #include <cstdint>

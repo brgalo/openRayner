@@ -16,7 +16,8 @@ public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
   SwapChain(Device &deviceRef, VkExtent2D windowExtent);
-  SwapChain(Device &deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+  SwapChain(Device &deviceRef, VkExtent2D windowExtent,
+            std::shared_ptr<SwapChain> previous);
   ~SwapChain();
 
   SwapChain(const SwapChain &) = delete;
@@ -48,7 +49,7 @@ public:
     return swapchain.swapChainDepthFormat == swapChainDepthFormat &&
            swapchain.swapChainImageFormat == swapChainImageFormat;
   }
-  
+
 private:
   void init();
   void createSwapChain();

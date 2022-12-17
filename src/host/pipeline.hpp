@@ -11,7 +11,7 @@ namespace oray {
 
 struct PipelineConfigInfo {
   PipelineConfigInfo(const PipelineConfigInfo &) = delete;
-  PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+  PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
   VkPipelineViewportStateCreateInfo viewportInfo;
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -37,7 +37,7 @@ public:
   Pipeline(const Pipeline &) = delete;
   Pipeline &operator=(const Pipeline &) = delete;
 
-  static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
+  static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
 
   void bind(VkCommandBuffer commandBuffer);
 

@@ -19,7 +19,7 @@ void KeyboardController::moveInPlaneXZ(GLFWwindow *window, float dt,
   if (glfwGetKey(window, keys.lookDown) == GLFW_PRESS)
     rotate.x -= 1.f;
 
-  if(glm::dot(rotate,rotate) > std::numeric_limits<float>::epsilon()) {
+  if (glm::dot(rotate, rotate) > std::numeric_limits<float>::epsilon()) {
     orayObject.transform.rotation += lookSpeed * dt * glm::normalize(rotate);
   }
   orayObject.transform.rotation.x =
@@ -45,11 +45,10 @@ void KeyboardController::moveInPlaneXZ(GLFWwindow *window, float dt,
   if (glfwGetKey(window, keys.moveDown) == GLFW_PRESS)
     moveDir -= upDir;
 
-  if(glm::dot(moveDir,moveDir) > std::numeric_limits<float>::epsilon()) {
-    orayObject.transform.translation += moveSpeed * dt * glm::normalize(moveDir);
+  if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
+    orayObject.transform.translation +=
+        moveSpeed * dt * glm::normalize(moveDir);
   }
-  
-  
 }
 
-}
+} // namespace oray
