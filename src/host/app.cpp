@@ -1,11 +1,18 @@
 #include "app.hpp"
 
+#include "buffer.hpp"
 #include "camera.hpp"
 #include "device.hpp"
+#include "frameinfo.hpp"
 #include "geometry.hpp"
+#include "glm/common.hpp"
+#include "glm/fwd.hpp"
+#include "glm/geometric.hpp"
 #include "keyboard.hpp"
 #include "pipeline.hpp"
 #include "rendersystem.hpp"
+#include <vector>
+#include <vulkan/vulkan_core.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -20,11 +27,26 @@
 
 namespace oray {
 
+struct GlobalUbo {
+  glm::mat4 projectionView{1.f};
+  glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f, -3.f, -1.f});
+};
+
 Application::Application() { loadOrayObjects(); }
 
 Application::~Application() {}
 
 void Application::run() {
+
+  std::vector<std::unique_ptr<Buffer>> uboBuffers(
+      SwapChain::MAX_FRAMES_IN_FLIGHT);
+  for (auto &buffer : uboBuffers) {
+    buffer = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1,
+                                      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    buffer->map();
+  }
+
   RenderSystem renderSystem{device, renderer.getSwapchainRenderpass()};
   Camera camera{};
   //  camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
@@ -56,8 +78,17 @@ void Application::run() {
     camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1, 10);
 
     if (auto commandBuffer = renderer.beginFrame()) {
+      int frameIndex = renderer.getFrameIndex();
+      FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera};
+      // update
+      GlobalUbo ubo{};
+      ubo.projectionView = camera.getProjection() * camera.getView();
+      uboBuffers[frameIndex]->writeToBuffer(&ubo);
+      uboBuffers[frameIndex]->flush();
+
+      // rendering
       renderer.beginSwapchainRenderPass(commandBuffer);
-      renderSystem.renderOrayObjects(commandBuffer, orayObjects, camera);
+      renderSystem.renderOrayObjects(frameInfo, orayObjects);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.endFrame();
     }
@@ -66,8 +97,9 @@ void Application::run() {
   vkDeviceWaitIdle(device.device());
 }
 
-// temporary helper function, creates a 1x1x1 cube centered at offset with an index buffer
-std::unique_ptr<Geometry> createCubeModel(Device& device, glm::vec3 offset) {
+// temporary helper function, creates a 1x1x1 cube centered at offset with an
+// index buffer
+std::unique_ptr<Geometry> createCubeModel(Device &device, glm::vec3 offset) {
   Geometry::Builder modelBuilder{};
   modelBuilder.vertices = {
       // left face (white)
@@ -106,18 +138,20 @@ std::unique_ptr<Geometry> createCubeModel(Device& device, glm::vec3 offset) {
       {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
       {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
   };
-  for (auto& v : modelBuilder.vertices) {
+  for (auto &v : modelBuilder.vertices) {
     v.position += offset;
   }
 
-  modelBuilder.indices = {0,  1,  2,  0,  3,  1,  4,  5,  6,  4,  7,  5,  8,  9,  10, 8,  11, 9,
-                          12, 13, 14, 12, 15, 13, 16, 17, 18, 16, 19, 17, 20, 21, 22, 20, 23, 21};
+  modelBuilder.indices = {0,  1,  2,  0,  3,  1,  4,  5,  6,  4,  7,  5,
+                          8,  9,  10, 8,  11, 9,  12, 13, 14, 12, 15, 13,
+                          16, 17, 18, 16, 19, 17, 20, 21, 22, 20, 23, 21};
 
   return std::make_unique<Geometry>(device, modelBuilder);
 }
 
 void Application::loadOrayObjects() {
-  std::shared_ptr<Geometry> geometry = Geometry::createModelFromFile(device, "models/smooth_vase.obj");
+  std::shared_ptr<Geometry> geometry =
+      Geometry::createModelFromFile(device, "models/smooth_vase.obj");
 
   auto orayObj = OrayObject::createOrayObject();
   orayObj.geom = geometry;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "camera.hpp"
+#include "frameinfo.hpp"
 #include "geometry.hpp"
 #include "orayobject.hpp"
 #include "pipeline.hpp"
@@ -17,9 +18,8 @@ public:
   RenderSystem(const RenderSystem &) = delete;
   RenderSystem &operator=(const RenderSystem &) = delete;
 
-  void renderOrayObjects(VkCommandBuffer commandBuffer,
-                         std::vector<OrayObject> &orayObjects,
-                         const Camera &camera);
+  void renderOrayObjects(FrameInfo &frameInfo,
+                         std::vector<OrayObject> &orayObjects);
 
 private:
   void createPipelineLayout();

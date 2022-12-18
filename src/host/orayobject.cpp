@@ -1,4 +1,3 @@
-#pragma once
 #include "orayobject.hpp"
 #include "glm/fwd.hpp"
 

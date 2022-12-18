@@ -67,11 +67,10 @@ void RenderSystem::createPipeline(VkRenderPass renderPass) {
       device, "spv/shader.vert.spv", "spv/shader.frag.spv", pipelineConfig);
 }
 
-void RenderSystem::renderOrayObjects(VkCommandBuffer commandBuffer,
-                                     std::vector<OrayObject> &orayObjects,
-                                     const Camera &camera) {
-  graphicsPipeline->bind(commandBuffer);
-  auto projectionView = camera.getProjection() * camera.getView();
+void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
+                                     std::vector<OrayObject> &orayObjects) {
+  graphicsPipeline->bind(frameInfo.commandBuffer);
+  auto projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
 
   for (auto &obj : orayObjects) {
     SimplePushConstantData push{};
@@ -79,12 +78,12 @@ void RenderSystem::renderOrayObjects(VkCommandBuffer commandBuffer,
     push.transform = projectionView * modelMatrix;
     push.normalMatrix = obj.transform.normalMatrix();
 
-    vkCmdPushConstants(commandBuffer, pipelineLayout,
+    vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout,
                        VK_SHADER_STAGE_VERTEX_BIT |
                            VK_SHADER_STAGE_FRAGMENT_BIT,
                        0, sizeof(SimplePushConstantData), &push);
-    obj.geom->bind(commandBuffer);
-    obj.geom->draw(commandBuffer);
+    obj.geom->bind(frameInfo.commandBuffer);
+    obj.geom->draw(frameInfo.commandBuffer);
   }
 }
 

@@ -1,5 +1,8 @@
 add_library(renderer app.hpp
                      app.cpp
+                     buffer.hpp
+                     buffer.cpp
+                     frameinfo.hpp
                      renderer.hpp
                      renderer.cpp
                      rendersystem.hpp
