@@ -2,27 +2,29 @@ add_library(renderer app.hpp
                      app.cpp
                      buffer.hpp
                      buffer.cpp
+                     camera.hpp
+                     camera.cpp
+                     descriptors.hpp
+                     descriptors.cpp
+                     device.cpp
+                     device.hpp
                      frameinfo.hpp
+                     geometry.hpp
+                     geometry.cpp
+                     keyboard.hpp
+                     keyboard.cpp
+                     orayobject.hpp
+                     orayobject.cpp
+                     pipeline.cpp
+                     pipeline.hpp
                      renderer.hpp
                      renderer.cpp
                      rendersystem.hpp
                      rendersystem.cpp
-                     camera.hpp
-                     camera.cpp
-                     window.hpp
-                     window.cpp
-                     keyboard.hpp
-                     keyboard.cpp
-                     pipeline.cpp
-                     pipeline.hpp
-                     device.cpp
-                     device.hpp
                      swapchain.hpp
                      swapchain.cpp
-                     geometry.hpp
-                     geometry.cpp
-                     orayobject.hpp
-                     orayobject.cpp
+                     window.hpp
+                     window.cpp
                      utils.hpp)
                      
 target_link_libraries(renderer PRIVATE glfw

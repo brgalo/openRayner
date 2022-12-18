@@ -2,6 +2,7 @@
 
 #include "buffer.hpp"
 #include "camera.hpp"
+#include "descriptors.hpp"
 #include "device.hpp"
 #include "frameinfo.hpp"
 #include "geometry.hpp"
@@ -29,10 +30,19 @@ namespace oray {
 
 struct GlobalUbo {
   glm::mat4 projectionView{1.f};
-  glm::vec3 lightDirection = glm::normalize(glm::vec3{1.f, -3.f, -1.f});
+  glm::vec4 ambientLightColor{1.f, 1.f, 1.f, 0.2f};
+  glm::vec3 lightPosition{-1.f};
+  alignas(16) glm::vec4 lightColor{1.f};
 };
 
-Application::Application() { loadOrayObjects(); }
+Application::Application() {
+  globalPool = DescriptorPool::Builder(device)
+                   .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
+                   .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                SwapChain::MAX_FRAMES_IN_FLIGHT)
+                   .build();
+  loadOrayObjects();
+}
 
 Application::~Application() {}
 
@@ -47,7 +57,22 @@ void Application::run() {
     buffer->map();
   }
 
-  RenderSystem renderSystem{device, renderer.getSwapchainRenderpass()};
+  auto globalSetLayout = DescriptorSetLayout::Builder(device)
+                             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                         VK_SHADER_STAGE_VERTEX_BIT)
+                             .build();
+
+  std::vector<VkDescriptorSet> globalDescriptorSets(
+      SwapChain::MAX_FRAMES_IN_FLIGHT);
+  for (int i = 0; i < globalDescriptorSets.size(); ++i) {
+    auto bufferInfo = uboBuffers[i]->descriptorInfo();
+    DescriptorWriter(*globalSetLayout, *globalPool)
+        .writeBuffer(0, &bufferInfo)
+        .build(globalDescriptorSets[i]);
+  }
+
+  RenderSystem renderSystem{device, renderer.getSwapchainRenderpass(),
+                            globalSetLayout->getDescriptorSetLayout()};
   Camera camera{};
   //  camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
   camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
@@ -79,7 +104,8 @@ void Application::run() {
 
     if (auto commandBuffer = renderer.beginFrame()) {
       int frameIndex = renderer.getFrameIndex();
-      FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera};
+      FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera,
+                          globalDescriptorSets[frameIndex]};
       // update
       GlobalUbo ubo{};
       ubo.projectionView = camera.getProjection() * camera.getView();
