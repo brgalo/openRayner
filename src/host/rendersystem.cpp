@@ -28,7 +28,8 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass,
                            VkDescriptorSetLayout globalSetLayout)
     : device{device} {
   createPipelineLayout(globalSetLayout);
-  createPipeline(renderPass);
+  createPipeline(renderPass, trianglePipeline, "spv/shader.vert.spv",
+                 "spv/shader.frag.spv");
 }
 
 RenderSystem::~RenderSystem() {
@@ -58,7 +59,7 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
   }
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass) {
+void RenderSystem::createPipeline(VkRenderPass renderPass, std::unique_ptr<Pipeline> &pipeline, const std::string vertShaderFilepath, const std::string fragShaderFilepath) {
   assert(pipelineLayout != nullptr &&
          "Cannot create pipeline before swapchain layout");
 
@@ -66,13 +67,13 @@ void RenderSystem::createPipeline(VkRenderPass renderPass) {
   Pipeline::defaultPipelineConfigInfo(pipelineConfig);
   pipelineConfig.renderPass = renderPass;
   pipelineConfig.pipelineLayout = pipelineLayout;
-  graphicsPipeline = std::make_unique<Pipeline>(
-      device, "spv/shader.vert.spv", "spv/shader.frag.spv", pipelineConfig);
+  pipeline = std::make_unique<Pipeline>(
+      device, vertShaderFilepath, fragShaderFilepath, pipelineConfig);
 }
 
 void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
                                      std::vector<OrayObject> &orayObjects) {
-  graphicsPipeline->bind(frameInfo.commandBuffer);
+  trianglePipeline->bind(frameInfo.commandBuffer);
 
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,

@@ -23,11 +23,15 @@ public:
 
 private:
   void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-  void createPipeline(VkRenderPass renderPass);
+  void createPipeline(VkRenderPass renderPass,
+                      std::unique_ptr<Pipeline> &pipeline,
+                      const std::string vertShaderFilepath,
+                      const std::string fragShaderFilepath);
 
   Device &device;
 
-  std::unique_ptr<Pipeline> graphicsPipeline;
+  std::unique_ptr<Pipeline> trianglePipeline;
+  std::unique_ptr<Pipeline> linePipeline;
   VkPipelineLayout pipelineLayout;
 };
 
