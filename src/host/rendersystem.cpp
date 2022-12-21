@@ -33,8 +33,8 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
   Pipeline::defaultPipelineConfigInfo(pipelineConfig);
 
   createPipeline(triRenderPass, trianglePipeline, trianglePipelineLayout,
-                 pipelineConfig, "spv/lineShader.vert.spv",
-                 "spv/lineShader.frag.spv");
+                 pipelineConfig, "spv/shader.vert.spv",
+                 "spv/shader.frag.spv");
   pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
   createPipeline(lineRenderPass, linePipeline, linePipelineLayout,
                  pipelineConfig, "spv/lineShader.vert.spv",
