@@ -120,7 +120,7 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer) {
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = swapchain->getRenderPass();
+  renderPassInfo.renderPass = swapchain->getTriangleRenderPass();
   renderPassInfo.framebuffer = swapchain->getFrameBuffer(currentImgIdx);
 
   renderPassInfo.renderArea.offset = {0, 0};

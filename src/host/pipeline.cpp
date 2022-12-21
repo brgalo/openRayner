@@ -20,7 +20,7 @@ Pipeline::Pipeline(Device &device, const std::string &vertFilepath,
 Pipeline::~Pipeline() {
   vkDestroyShaderModule(device.device(), fragShaderModule, nullptr);
   vkDestroyShaderModule(device.device(), vertShaderModule, nullptr);
-  vkDestroyPipeline(device.device(), graphicsPipeline, nullptr);
+  vkDestroyPipeline(device.device(), pipeline, nullptr);
 }
 
 std::vector<char> Pipeline::readFile(const std::string &filepath) {
@@ -103,7 +103,7 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
   if (vkCreateGraphicsPipelines(device.device(), nullptr, 1, &pipelineInfo,
-                                nullptr, &graphicsPipeline) != VK_SUCCESS) {
+                                nullptr, &pipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline!");
   }
 }
@@ -123,7 +123,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code,
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    graphicsPipeline);
+                    pipeline);
 }
 
 void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo &configInfo) {

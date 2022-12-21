@@ -9,6 +9,7 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -56,7 +57,8 @@ SwapChain::~SwapChain() {
     vkDestroyFramebuffer(device.device(), framebuffer, nullptr);
   }
 
-  vkDestroyRenderPass(device.device(), renderPass, nullptr);
+  vkDestroyRenderPass(device.device(), triangleRenderPass, nullptr);
+  vkDestroyRenderPass(device.device(), lineRenderPass, nullptr);
 
   // cleanup synchronization objects
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -277,7 +279,13 @@ void SwapChain::createRenderPass() {
   renderPassInfo.pDependencies = &dependency;
 
   if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr,
-                         &renderPass) != VK_SUCCESS) {
+                         &triangleRenderPass) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create render pass!");
+  }
+
+  // create Line render Pass
+    if (vkCreateRenderPass(device.device(), &renderPassInfo, nullptr,
+                         &lineRenderPass) != VK_SUCCESS) {
     throw std::runtime_error("failed to create render pass!");
   }
 }
@@ -291,7 +299,7 @@ void SwapChain::createFramebuffers() {
     VkExtent2D swapChainExtent = getSwapChainExtent();
     VkFramebufferCreateInfo framebufferInfo = {};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.renderPass = triangleRenderPass;
     framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
     framebufferInfo.pAttachments = attachments.data();
     framebufferInfo.width = swapChainExtent.width;

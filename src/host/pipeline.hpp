@@ -51,7 +51,8 @@ private:
                           VkShaderModule *shaderModule);
 
   Device &device;
-  VkPipeline graphicsPipeline;
+
+  VkPipeline pipeline;
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
 };

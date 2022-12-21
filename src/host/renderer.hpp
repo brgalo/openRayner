@@ -18,8 +18,11 @@ public:
   Renderer(const Renderer &) = delete;
   Renderer &operator=(const Renderer &) = delete;
 
-  VkRenderPass getSwapchainRenderpass() const {
-    return swapchain->getRenderPass();
+  VkRenderPass getSwapchainTriangleRenderpass() const {
+    return swapchain->getTriangleRenderPass();
+  };
+  VkRenderPass getSwapchainLineRenderPass() const {
+    return swapchain->getLineRenderPass();
   };
   float getAspectRatio() const { return swapchain->extentAspectRatio(); };
   bool isFrameInProgress() const { return isFrameStarted; };

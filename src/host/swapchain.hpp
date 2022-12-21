@@ -27,7 +27,8 @@ public:
     return swapChainFramebuffers[index];
   }
 
-  VkRenderPass getRenderPass() { return renderPass; }
+  VkRenderPass getTriangleRenderPass() { return triangleRenderPass; }
+  VkRenderPass getLineRenderPass() { return lineRenderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
   size_t imageCount() { return swapChainImages.size(); }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
@@ -71,7 +72,8 @@ private:
   VkExtent2D swapChainExtent;
 
   std::vector<VkFramebuffer> swapChainFramebuffers;
-  VkRenderPass renderPass;
+  VkRenderPass triangleRenderPass;
+  VkRenderPass lineRenderPass;
 
   std::vector<VkImage> depthImages;
   std::vector<VkDeviceMemory> depthImageMemorys;
