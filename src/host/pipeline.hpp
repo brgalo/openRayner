@@ -29,9 +29,12 @@ struct PipelineConfigInfo {
 
 class Pipeline {
 public:
-  Pipeline(Device &device, const std::string &vertFilepath,
-           const std::string &fragFilepath,
-           const PipelineConfigInfo &configInfo);
+  Pipeline(
+      Device &device, const std::string &vertFilepath,
+      const std::string &fragFilepath, const PipelineConfigInfo &configInfo,
+      const std::vector<VkVertexInputBindingDescription> &bindingDescriptions,
+      const std::vector<VkVertexInputAttributeDescription>
+          &attributeDescriptions);
   ~Pipeline();
 
   Pipeline(const Pipeline &) = delete;
@@ -43,9 +46,9 @@ public:
 
 private:
   static std::vector<char> readFile(const std::string &filepath);
-  void createPipeline(const std::string &vertFilePath,
-                      const std::string &fragFilePath,
-                      const PipelineConfigInfo &configInfo);
+  void createPipeline(
+      const std::string &vertFilepath, const std::string &fragFilepath,
+      const PipelineConfigInfo &configInfo);
 
   void createShaderModule(const std::vector<char> &code,
                           VkShaderModule *shaderModule);
@@ -55,5 +58,8 @@ private:
   VkPipeline pipeline;
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+  
 };
 } // namespace oray

@@ -27,13 +27,16 @@ public:
   void renderLines(FrameInfo &frameInfo, Buffer &lines);
 
 private:
-  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-  void createPipeline(VkRenderPass renderPass,
-                      std::unique_ptr<Pipeline> &pipeline,
-                      VkPipelineLayout pipelineLayout,
-                      PipelineConfigInfo &configInfo,
-                      const std::string vertShaderFilepath,
-                      const std::string fragShaderFilepath);
+  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
+                            VkPipelineLayout &pipelineLayout);
+  void createPipeline(
+      VkRenderPass renderPass, std::unique_ptr<Pipeline> &pipeline,
+      VkPipelineLayout pipelineLayout, PipelineConfigInfo &pipelineConfig,
+      const std::vector<VkVertexInputBindingDescription> &bindingDescriptions,
+      const std::vector<VkVertexInputAttributeDescription>
+          &attributeDescriptions,
+      const std::string vertShaderFilepath,
+      const std::string fragShaderFilepath);
 
   Device &device;
 

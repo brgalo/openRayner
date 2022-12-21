@@ -17,8 +17,8 @@
 #include <glm/gtx/hash.hpp>
 
 namespace std {
-template <> struct hash<oray::Geometry::Vertex> {
-  size_t operator()(oray::Geometry::Vertex const &vertex) const {
+template <> struct hash<oray::Geometry::TriangleVertex> {
+  size_t operator()(oray::Geometry::TriangleVertex const &vertex) const {
     size_t seed = 0;
     oray::hashCombine(seed, vertex.position, vertex.color, vertex.normal,
                       vertex.uv);
@@ -28,6 +28,8 @@ template <> struct hash<oray::Geometry::Vertex> {
 }
 
 namespace oray {
+using std::vector;
+
 Geometry::Geometry(Device &device, const Geometry::Builder &builder)
     : device(device) {
   createVertexBuffers(builder.vertices);
@@ -43,7 +45,7 @@ Geometry::createModelFromFile(Device &device, const std::string &filePath) {
   return std::make_unique<Geometry>(device, builder);
 }
 
-void Geometry::createVertexBuffers(const std::vector<Vertex> &vertices) {
+void Geometry::createVertexBuffers(const std::vector<TriangleVertex> &vertices) {
   vertexCount = static_cast<uint32_t>(vertices.size());
   assert(vertexCount >= 3 && "Vertex count must be at least 3");
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -111,29 +113,52 @@ void Geometry::draw(VkCommandBuffer commandBuffer) {
   }
 }
 
-std::vector<VkVertexInputBindingDescription>
-Geometry::Vertex::getBindingDescriptions() {
+vector<VkVertexInputBindingDescription>
+Geometry::getBindingDescriptionsTriangle() {
   std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
   bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(Vertex);
+  bindingDescriptions[0].stride = sizeof(TriangleVertex);
   bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
   return bindingDescriptions;
 }
 
+vector<VkVertexInputBindingDescription>
+Geometry::getBindingDescriptionsLine() {
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
+  bindingDescriptions[0].binding = 0;
+  bindingDescriptions[0].stride = sizeof(LineVertex);
+  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+  return bindingDescriptions;
+}
+
+
 std::vector<VkVertexInputAttributeDescription>
-Geometry::Vertex::getAttributeDescriptions() {
+Geometry::getAttributeDescriptionsTriangle() {
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
   attributeDescriptions.push_back(
-      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)});
+      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(TriangleVertex, position)});
   attributeDescriptions.push_back(
-      {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)});
+      {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(TriangleVertex, color)});
   attributeDescriptions.push_back(
-      {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)});
+      {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(TriangleVertex, normal)});
   attributeDescriptions.push_back(
-      {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)});
+      {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(TriangleVertex, uv)});
   return attributeDescriptions;
 }
+
+std::vector<VkVertexInputAttributeDescription>
+Geometry::getAttributeDescriptionsLine() {
+  std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+
+  attributeDescriptions.push_back(
+      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, position)});
+  attributeDescriptions.push_back(
+      {1, 0, VK_FORMAT_R32_SFLOAT, offsetof(LineVertex, distFromStart)});
+  return attributeDescriptions;
+}
+
+
 
 void Geometry::Builder::loadModel(const std::string &filePath) {
   tinyobj::attrib_t attrib;
@@ -149,11 +174,11 @@ void Geometry::Builder::loadModel(const std::string &filePath) {
   vertices.clear();
   indices.clear();
 
-  std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+  std::unordered_map<TriangleVertex, uint32_t> uniqueVertices{};
 
   for (const auto &shape : shapes) {
     for (const auto &index : shape.mesh.indices) {
-      Vertex vertex{};
+      TriangleVertex vertex{};
 
       if (index.vertex_index >= 0) {
         vertex.position = {
@@ -192,4 +217,4 @@ void Geometry::Builder::loadModel(const std::string &filePath) {
     }
   }
 }
-}// namespace oray
+} // namespace oray

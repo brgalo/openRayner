@@ -10,10 +10,14 @@
 
 namespace oray {
 
-Pipeline::Pipeline(Device &device, const std::string &vertFilepath,
-                   const std::string &fragFilepath,
-                   const PipelineConfigInfo &configInfo)
-    : device(device) {
+Pipeline::Pipeline(
+    Device &device, const std::string &vertFilepath,
+    const std::string &fragFilepath, const PipelineConfigInfo &configInfo,
+    const std::vector<VkVertexInputBindingDescription> &bindingDescriptions,
+    const std::vector<VkVertexInputAttributeDescription> &attributeDescriptions)
+    : device(device), bindingDescriptions{bindingDescriptions},
+      attributeDescriptions{attributeDescriptions} {
+  
   createPipeline(vertFilepath, fragFilepath, configInfo);
 }
 
@@ -37,9 +41,10 @@ std::vector<char> Pipeline::readFile(const std::string &filepath) {
   return buffer;
 }
 
-void Pipeline::createPipeline(const std::string &vertFilepath,
-                              const std::string &fragFilepath,
-                              const PipelineConfigInfo &configInfo) {
+void Pipeline::createPipeline(
+    const std::string &vertFilepath, const std::string &fragFilepath,
+    const PipelineConfigInfo &configInfo) {
+  
   auto vertCode = readFile(vertFilepath);
   auto fragCode = readFile(fragFilepath);
 
@@ -68,9 +73,6 @@ void Pipeline::createPipeline(const std::string &vertFilepath,
   shaderStages[1].flags = 0;
   shaderStages[1].pNext = nullptr;
   shaderStages[1].pSpecializationInfo = nullptr;
-
-  auto bindingDescriptions = Geometry::Vertex::getBindingDescriptions();
-  auto attributeDescriptions = Geometry::Vertex::getAttributeDescriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType =

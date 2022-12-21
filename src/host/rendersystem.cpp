@@ -28,17 +28,25 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
                            VkRenderPass lineRenderPass,
                            VkDescriptorSetLayout globalSetLayout)
     : device{device} {
-  createPipelineLayout(globalSetLayout);
+  // create pipelinelayout for both pipelines
+  createPipelineLayout(globalSetLayout, trianglePipelineLayout);
+  createPipelineLayout(globalSetLayout, linePipelineLayout);
+
   PipelineConfigInfo pipelineConfig{};
   Pipeline::defaultPipelineConfigInfo(pipelineConfig);
 
+  // triangle pipeline
   createPipeline(triRenderPass, trianglePipeline, trianglePipelineLayout,
-                 pipelineConfig, "spv/shader.vert.spv",
-                 "spv/shader.frag.spv");
+                 pipelineConfig, Geometry::getBindingDescriptionsTriangle(),
+                 Geometry::getAttributeDescriptionsTriangle(),
+                 "spv/shader.vert.spv", "spv/shader.frag.spv");
+
+  // change toplogy to have a triangle render pipeline
   pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
   createPipeline(lineRenderPass, linePipeline, linePipelineLayout,
-                 pipelineConfig, "spv/lineShader.vert.spv",
-                 "spv/lineShader.frag.spv");
+                 pipelineConfig, Geometry::getBindingDescriptionsLine(),
+                 Geometry::getAttributeDescriptionsLine(),
+                 "spv/lineShader.vert.spv", "spv/lineShader.frag.spv");
 }
 
 RenderSystem::~RenderSystem() {
@@ -46,7 +54,8 @@ RenderSystem::~RenderSystem() {
   vkDestroyPipelineLayout(device.device(), linePipelineLayout, nullptr);
 }
 
-void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
+                                        VkPipelineLayout &pipelineLayout) {
 
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags =
@@ -55,6 +64,7 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
   pushConstantRange.size = sizeof(SimplePushConstantData);
 
   std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -76,19 +86,22 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
   }
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass,
-                                  std::unique_ptr<Pipeline> &pipeline,
-                                  VkPipelineLayout pipelineLayout,
-                                  PipelineConfigInfo &pipelineConfig,
-                                  const std::string vertShaderFilepath,
-                                  const std::string fragShaderFilepath) {
+void RenderSystem::createPipeline(
+    VkRenderPass renderPass, std::unique_ptr<Pipeline> &pipeline,
+    VkPipelineLayout pipelineLayout, PipelineConfigInfo &pipelineConfig,
+    const std::vector<VkVertexInputBindingDescription> &bindingDescriptions,
+    const std::vector<VkVertexInputAttributeDescription> &attributeDescriptions,
+    const std::string vertShaderFilepath,
+    const std::string fragShaderFilepath) {
+  
   assert(pipelineLayout != nullptr &&
          "Cannot create pipeline before swapchain layout");
 
   pipelineConfig.renderPass = renderPass;
   pipelineConfig.pipelineLayout = pipelineLayout;
-  pipeline = std::make_unique<Pipeline>(device, vertShaderFilepath,
-                                        fragShaderFilepath, pipelineConfig);
+  pipeline = std::make_unique<Pipeline>(
+      device, vertShaderFilepath, fragShaderFilepath, pipelineConfig,
+      bindingDescriptions, attributeDescriptions);
 }
 
 void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
