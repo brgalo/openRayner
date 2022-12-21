@@ -43,6 +43,7 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
 
   // change toplogy to have a triangle render pipeline
   pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+  pipelineConfig.rasterizationInfo.lineWidth = 2.f;
   createPipeline(lineRenderPass, linePipeline, linePipelineLayout,
                  pipelineConfig, Geometry::getBindingDescriptionsLine(),
                  Geometry::getAttributeDescriptionsLine(),
