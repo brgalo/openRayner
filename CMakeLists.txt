@@ -9,9 +9,12 @@ find_package(Vulkan REQUIRED COMPONENTS glslc)
 
 
 #glfw
+set(GLFW_DIR "${PROJECT_SOURCE_DIR}/libs/glfw")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL "Generate installation target" OFF)
+set(GLFW_DOCUMENT_INTERNALS "Include internals in documentation" OFF)
 add_subdirectory(libs/glfw)
 include_directories(libs/glfw/include)
 
@@ -20,6 +23,20 @@ add_subdirectory(libs/glm)
 
 #tiny obj loader
 set(TINY_OBJ_PATH "${PROJECT_SOURCE_DIR}/libs/tinyobjloader")
+
+# imGui
+set(IMGUI_DIR "${PROJECT_SOURCE_DIR}/libs/imgui")
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
+
+# imPlot
+set(IMPLOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/implot)
+include_directories(${IMPLOT_DIR})
+set(IMPLOT_INCLUDES ${IMPLOT_DIR}/implot.h
+                    ${IMPLOT_DIR}/implot_internal.h
+                    ${IMPLOT_DIR}/implot.cpp   
+                    ${IMPLOT_DIR}/implot_items.cpp
+                    ${IMPLOT_DIR}/implot_demo.cpp)
+
 
 #sourcecode
 add_subdirectory(src/host)
