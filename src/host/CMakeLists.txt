@@ -26,9 +26,14 @@ add_library(renderer app.hpp
                      window.hpp
                      window.cpp
                      utils.hpp)
+
+add_library(gui gui.hpp
+                gui.cpp
+                ${IMGUI_INCLUDES})       
                      
 target_link_libraries(renderer PRIVATE glfw
-                               PRIVATE glm::glm)
+                               PRIVATE glm::glm
+                               PRIVATE gui)
 #if(MSVC)
 #    target_compile_options(renderer PRIVATE /W4 /WX)
 #else()
