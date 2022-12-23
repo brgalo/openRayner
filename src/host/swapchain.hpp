@@ -30,6 +30,7 @@ public:
   VkRenderPass getTriangleRenderPass() { return triangleRenderPass; }
   VkRenderPass getLineRenderPass() { return lineRenderPass; }
   VkImageView getImageView(int index) { return swapChainImageViews[index]; }
+  VkImageView* getImageViewPointer(int index) {return &swapChainImageViews[index];}
   size_t imageCount() { return swapChainImages.size(); }
   VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
   VkExtent2D getSwapChainExtent() { return swapChainExtent; }

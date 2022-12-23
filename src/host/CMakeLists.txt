@@ -29,7 +29,8 @@ add_library(renderer app.hpp
 
 add_library(gui gui.hpp
                 gui.cpp
-                ${IMGUI_INCLUDES})       
+                ${IMGUI_INCLUDES}
+                ${IMPLOT_INCLUDES})       
                      
 target_link_libraries(renderer PRIVATE glfw
                                PRIVATE glm::glm

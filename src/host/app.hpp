@@ -1,10 +1,10 @@
 #pragma once
 
+#include "descriptors.hpp"
 #include "geometry.hpp"
 #include "orayobject.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
-#include "descriptors.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -32,7 +32,7 @@ private:
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
   Renderer renderer{window, device};
-  
+
   std::unique_ptr<DescriptorPool> globalPool{};
   std::vector<OrayObject> orayObjects;
 };

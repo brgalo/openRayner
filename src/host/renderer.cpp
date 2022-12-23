@@ -16,6 +16,8 @@ namespace oray {
 Renderer::Renderer(Window &win, Device &dev) : window{win}, device{dev} {
   recreateSwapchain();
   createCommandBuffers();
+  gui = std::make_unique<Gui>(device, window.getGLFWwindow(),
+                               swapchain.get());
 }
 
 Renderer::~Renderer() { freeCommandBuffers(); }
@@ -42,6 +44,7 @@ void Renderer::freeCommandBuffers() {
 }
 
 void Renderer::recreateSwapchain() {
+  bool hasChanged = false;
   auto extent = window.getExtent();
   while (extent.width == 0 || extent.height == 0) {
     extent = window.getExtent();
@@ -52,6 +55,7 @@ void Renderer::recreateSwapchain() {
   if (swapchain == nullptr) {
     swapchain = std::make_unique<SwapChain>(device, extent);
   } else {
+    hasChanged = true;
     std::shared_ptr<SwapChain> oldSwapchain = std::move(swapchain);
     swapchain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
 
@@ -62,6 +66,9 @@ void Renderer::recreateSwapchain() {
   }
   // if render pass compatible, dont do anything else
   // createPipeline();
+
+  // update imgui ressources
+  if(hasChanged) gui->recreateFramebuffers(swapchain.get());
 }
 
 VkCommandBuffer Renderer::beginFrame() {

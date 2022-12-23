@@ -1,10 +1,79 @@
 #include "gui.hpp"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+#include "implot.h"
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
 namespace oray {
 
-Gui::Gui(Device &device) : device{device} {
+Gui::Gui(Device &device, GLFWwindow *pWindow, SwapChain *swapchain)
+    : device{device}, window{pWindow} {
+
+  createDescriptorPool();
+  createContext(swapchain->getSwapChainImageFormat(), swapchain->imageCount());
+  uploadFonts();
+  createFramebuffers(swapchain);
+}
+
+Gui::~Gui() {
+  vkDeviceWaitIdle(device.device());
+  destroyImGuiRenderPass();
+
+  ImPlot::DestroyContext();
+  ImGui_ImplVulkan_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
+void Gui::recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
+                              VkExtent2D extent) {
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+  ImGui::ShowDemoWindow();
+  ImPlot::ShowMetricsWindow();
+  ImGui::Render();
+
+  VkRenderPassBeginInfo renderPassInfo = {
+      VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  renderPassInfo.renderPass = renderPass;
+  renderPassInfo.framebuffer = frameBuffers[imgIdx];
+  renderPassInfo.renderArea.offset = {0, 0};
+  renderPassInfo.renderArea.extent = extent;
+  vkCmdBeginRenderPass(buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), buffer);
+}
+
+void Gui::createContext(VkFormat imageFormat, uint32_t imageCount) {
+  ImGui::CreateContext();
+  ImGui::StyleColorsDark();
+
+  // init implot
+  ImPlot::CreateContext();
+  ImPlot::StyleColorsDark();
+
+  ImGui_ImplGlfw_InitForVulkan(window, true);
+  ImGui_ImplVulkan_InitInfo init_info = {};
+  init_info.Instance = device.getInstance();
+  init_info.PhysicalDevice = device.getPhysicalDevice();
+  init_info.Device = device.device();
+  init_info.QueueFamily = device.findPhysicalQueueFamilies().graphicsFamily;
+  init_info.Queue = device.graphicsQueue();
+  init_info.PipelineCache = VK_NULL_HANDLE;
+  init_info.DescriptorPool = descriptorPool;
+  init_info.Allocator = nullptr;
+  init_info.MinImageCount = 2;
+  init_info.ImageCount = imageCount;
+  init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+  createImGuiRenderPass(imageFormat);
+
+  ImGui_ImplVulkan_Init(&init_info, renderPass);
+}
+
+void Gui::createDescriptorPool() {
   // allocate a humungous descriptor pool?
   // TODO: reduce size
 
@@ -34,5 +103,86 @@ Gui::Gui(Device &device) : device{device} {
         "couldnt allocate decriptor pool for imgui/implot");
   }
 }
+
+void Gui::createFramebuffers(SwapChain *swapchain) {
+  frameBuffers.resize(swapchain->imageCount());
+  VkFramebufferCreateInfo info = {};
+  info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  info.renderPass = renderPass;
+  info.attachmentCount = 1;
+  info.width = swapchain->width();
+  info.height = swapchain->height();
+  info.layers = 1;
+  for (int i = 0; i < swapchain->imageCount(); i++) {
+    info.pAttachments = swapchain->getImageViewPointer(i);
+    if (vkCreateFramebuffer(device.device(), &info, nullptr,
+                            &frameBuffers[i]) != VK_SUCCESS) {
+      throw std::runtime_error("couldnt create image view Framebuffers!");
+    }
+  }
 }
 
+void Gui::createImGuiRenderPass(VkFormat imageFormat) {
+  VkAttachmentDescription attachment = {};
+  attachment.format = imageFormat;
+  attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorAttachment = {};
+  colorAttachment.attachment = 0;
+  colorAttachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass = {};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &colorAttachment;
+
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkRenderPassCreateInfo info = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  info.attachmentCount = 1;
+  info.pAttachments = &attachment;
+  info.subpassCount = 1;
+  info.pSubpasses = &subpass;
+  info.dependencyCount = 1;
+  info.pDependencies = &dependency;
+
+  if (vkCreateRenderPass(device.device(), &info, nullptr, &renderPass) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create gui render pass!");
+  }
+}
+
+void Gui::destroyImGuiRenderPass() {
+  vkDestroyRenderPass(device.device(), renderPass, nullptr);
+}
+
+void Gui::destroyFramebuffers() {
+  for (auto &buffer : frameBuffers) {
+    vkDestroyFramebuffer(device.device(), buffer, nullptr);
+  }
+}
+void Gui::uploadFonts() {
+  VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+  ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+  device.endSingleTimeCommands(commandBuffer);
+  vkDeviceWaitIdle(device.device());
+  ImGui_ImplVulkan_DestroyFontUploadObjects();
+}
+
+void Gui::recreateFramebuffers(SwapChain *swapchain) {
+  destroyFramebuffers();
+  createFramebuffers(swapchain);
+}
+} // namespace oray

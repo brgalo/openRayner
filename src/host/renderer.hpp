@@ -1,7 +1,7 @@
 #pragma once
 
 #include "geometry.hpp"
-#include "swapchain.hpp"
+#include "gui.hpp"
 #include "window.hpp"
 
 #include <cassert>
@@ -37,6 +37,10 @@ public:
   void endFrame();
   void beginSwapchainRenderPass(VkCommandBuffer commandBuffer);
   void endSwapchainRenderPass(VkCommandBuffer commandBuffer);
+  void renderGui(VkCommandBuffer commandBuffer) {
+    gui->recordImGuiCommands(commandBuffer, currentImgIdx,
+                             swapchain->getSwapChainExtent());
+  }
 
   int getFrameIndex() const {
     assert(isFrameStarted &&
@@ -47,12 +51,12 @@ public:
 private:
   void createCommandBuffers();
   void freeCommandBuffers();
-  void drawFrame();
   void recreateSwapchain();
 
   Window &window;
   Device &device;
   std::unique_ptr<SwapChain> swapchain;
+  std::unique_ptr<Gui> gui;
   std::vector<VkCommandBuffer> commandBuffers;
 
   uint32_t currentImgIdx;

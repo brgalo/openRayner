@@ -5,6 +5,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -42,6 +43,8 @@ public:
   VkCommandPool getCommandPool() { return commandPool; }
   VkDevice device() { return device_; }
   VkSurfaceKHR surface() { return surface_; }
+  VkInstance getInstance() const { return instance; }
+  VkPhysicalDevice getPhysicalDevice() const { return physicalDevice;}
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
 
