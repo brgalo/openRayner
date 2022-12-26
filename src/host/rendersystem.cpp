@@ -43,7 +43,13 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
 
   // change toplogy to have a triangle render pipeline
   pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-  pipelineConfig.rasterizationInfo.lineWidth = 2.f;
+  // make linewidth dynamic
+  pipelineConfig.dynamicStateEnables.push_back(VK_DYNAMIC_STATE_LINE_WIDTH);
+  pipelineConfig.dynamicStateInfo.dynamicStateCount =
+      static_cast<uint32_t>(pipelineConfig.dynamicStateEnables.size());
+  pipelineConfig.dynamicStateInfo.pDynamicStates =
+      pipelineConfig.dynamicStateEnables.data();
+  pipelineConfig.rasterizationInfo.lineWidth = 1.f;
   createPipeline(lineRenderPass, linePipeline, linePipelineLayout,
                  pipelineConfig, Geometry::getBindingDescriptionsLine(),
                  Geometry::getAttributeDescriptionsLine(),
@@ -128,6 +134,7 @@ void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
 
 void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines) {
   linePipeline->bind(frameInfo.commandBuffer);
+  vkCmdSetLineWidth(frameInfo.commandBuffer, 2.0f);
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
                           0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);

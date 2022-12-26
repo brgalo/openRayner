@@ -132,8 +132,8 @@ void Application::run() {
       renderer.beginSwapchainRenderPass(commandBuffer);
       renderSystem.renderOrayObjects(frameInfo, orayObjects);
       renderSystem.renderLines(frameInfo, lineBuffer);
-      renderer.renderGui(commandBuffer);
       renderer.endSwapchainRenderPass(commandBuffer);
+      renderer.renderGui(commandBuffer);
       renderer.endFrame();
     }
   }
