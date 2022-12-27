@@ -28,10 +28,10 @@ public:
 
 private:
   void loadOrayObjects();
-
+  State state;
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
-  Renderer renderer{window, device};
+  Renderer renderer{window, device, state};
 
   std::unique_ptr<DescriptorPool> globalPool{};
   std::vector<OrayObject> orayObjects;

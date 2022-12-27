@@ -3,13 +3,14 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 #include "implot.h"
+#include "state.hpp"
 #include <stdexcept>
-#include <vulkan/vulkan_core.h>
+
 
 namespace oray {
 
-Gui::Gui(Device &device, GLFWwindow *pWindow, SwapChain *swapchain)
-    : device{device}, window{pWindow} {
+Gui::Gui(Device &device, GLFWwindow *pWindow, SwapChain *swapchain, State &state)
+    : device{device}, window{pWindow}, state{state} {
 
   createDescriptorPool();
   createContext(swapchain->getSwapChainImageFormat(), swapchain->imageCount());
@@ -19,12 +20,14 @@ Gui::Gui(Device &device, GLFWwindow *pWindow, SwapChain *swapchain)
 
 Gui::~Gui() {
   vkDeviceWaitIdle(device.device());
+  for (auto &frameBuffer : frameBuffers) {
+    vkDestroyFramebuffer(device.device(), frameBuffer, nullptr);
+  }
   destroyImGuiRenderPass();
-
-  ImPlot::DestroyContext();
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+  vkDestroyDescriptorPool(device.device(), descriptorPool, nullptr);
 }
 
 void Gui::recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
@@ -33,6 +36,11 @@ void Gui::recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
   ImGui::NewFrame();
   ImGui::ShowDemoWindow();
   ImPlot::ShowMetricsWindow();
+
+  ImGui::Begin("Line Width");
+  ImGui::SliderFloat("test", &state.lineWidth, 0.2f, 10.f);
+  ImGui::End();
+  
   ImGui::Render();
 
   VkRenderPassBeginInfo renderPassInfo = {
@@ -44,6 +52,8 @@ void Gui::recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
   vkCmdBeginRenderPass(buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), buffer);
+
+  vkCmdEndRenderPass(buffer);
 }
 
 void Gui::createContext(VkFormat imageFormat, uint32_t imageCount) {

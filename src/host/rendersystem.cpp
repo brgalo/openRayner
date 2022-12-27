@@ -132,9 +132,9 @@ void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
   }
 }
 
-void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines) {
+void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines, State &state) {
   linePipeline->bind(frameInfo.commandBuffer);
-  vkCmdSetLineWidth(frameInfo.commandBuffer, 2.0f);
+  vkCmdSetLineWidth(frameInfo.commandBuffer, state.lineWidth);
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
                           0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);

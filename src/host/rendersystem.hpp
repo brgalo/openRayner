@@ -6,10 +6,10 @@
 #include "geometry.hpp"
 #include "orayobject.hpp"
 #include "pipeline.hpp"
+#include "state.hpp"
 
 #include <memory>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace oray {
 class RenderSystem {
@@ -24,7 +24,7 @@ public:
 
   void renderOrayObjects(FrameInfo &frameInfo,
                          std::vector<OrayObject> &orayObjects);
-  void renderLines(FrameInfo &frameInfo, Buffer &lines);
+  void renderLines(FrameInfo &frameInfo, Buffer &lines, State &state);
 
 private:
   void createPipelineLayout(VkDescriptorSetLayout globalSetLayout,

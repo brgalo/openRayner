@@ -44,7 +44,10 @@ Application::Application() {
   loadOrayObjects();
 }
 
-Application::~Application() {}
+Application::~Application() {
+  // explicitly call desctructor
+  //renderer.Renderer::~Renderer();
+}
 
 void Application::run() {
 
@@ -131,7 +134,7 @@ void Application::run() {
       // rendering
       renderer.beginSwapchainRenderPass(commandBuffer);
       renderSystem.renderOrayObjects(frameInfo, orayObjects);
-      renderSystem.renderLines(frameInfo, lineBuffer);
+      renderSystem.renderLines(frameInfo, lineBuffer, state);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.renderGui(commandBuffer);
       renderer.endFrame();

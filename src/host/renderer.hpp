@@ -12,7 +12,7 @@
 namespace oray {
 class Renderer {
 public:
-  Renderer(Window &win, Device &dev);
+  Renderer(Window &win, Device &dev, State &state);
   ~Renderer();
 
   Renderer(const Renderer &) = delete;
@@ -55,6 +55,7 @@ private:
 
   Window &window;
   Device &device;
+  State &state;
   std::unique_ptr<SwapChain> swapchain;
   std::unique_ptr<Gui> gui;
   std::vector<VkCommandBuffer> commandBuffers;

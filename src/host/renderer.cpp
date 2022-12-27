@@ -13,11 +13,12 @@
 
 namespace oray {
 
-Renderer::Renderer(Window &win, Device &dev) : window{win}, device{dev} {
+Renderer::Renderer(Window &win, Device &dev, State &state)
+    : window{win}, device{dev}, state{state} {
   recreateSwapchain();
   createCommandBuffers();
-  gui = std::make_unique<Gui>(device, window.getGLFWwindow(),
-                               swapchain.get());
+  gui = std::make_unique<Gui>(device, window.getGLFWwindow(), swapchain.get(),
+                              state);
 }
 
 Renderer::~Renderer() { freeCommandBuffers(); }
@@ -68,7 +69,8 @@ void Renderer::recreateSwapchain() {
   // createPipeline();
 
   // update imgui ressources
-  if(hasChanged) gui->recreateFramebuffers(swapchain.get());
+  if (hasChanged)
+    gui->recreateFramebuffers(swapchain.get());
 }
 
 VkCommandBuffer Renderer::beginFrame() {
