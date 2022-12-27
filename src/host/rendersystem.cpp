@@ -29,8 +29,7 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
                            VkDescriptorSetLayout globalSetLayout)
     : device{device} {
   // create pipelinelayout for both pipelines
-  createPipelineLayout(globalSetLayout, trianglePipelineLayout);
-  createPipelineLayout(globalSetLayout, linePipelineLayout);
+  createPipelineLayouts(globalSetLayout);
 
   PipelineConfigInfo pipelineConfig{};
   Pipeline::defaultPipelineConfigInfo(pipelineConfig);
@@ -61,9 +60,17 @@ RenderSystem::~RenderSystem() {
   vkDestroyPipelineLayout(device.device(), linePipelineLayout, nullptr);
 }
 
-void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
-                                        VkPipelineLayout &pipelineLayout) {
+void RenderSystem::createPipelineLayouts(
+    VkDescriptorSetLayout globalSetLayout) {
+  // triange
+  createPipelineLayout(globalSetLayout, trianglePipelineLayout, true);
+  // lines
+  createPipelineLayout(globalSetLayout, linePipelineLayout);
+}
 
+void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
+                                        VkPipelineLayout &pipelineLayout,
+                                        bool WITH_CONSTANTS) {
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags =
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -72,24 +79,22 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
 
   std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
 
-
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutInfo.setLayoutCount =
       static_cast<uint32_t>(descriptorSetLayouts.size());
   pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  if (WITH_CONSTANTS) {
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+  } else {
+    pipelineLayoutInfo.pushConstantRangeCount = 0;
+  }
+
   pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
   if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr,
-                             &trianglePipelineLayout) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create triangle pipeline layout!");
-  }
-
-  pipelineLayoutInfo.pushConstantRangeCount = 0;
-  if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr,
-                             &linePipelineLayout) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create triangle pipeline layout!");
+                             &pipelineLayout) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create pipeline layout!");
   }
 }
 
@@ -100,7 +105,7 @@ void RenderSystem::createPipeline(
     const std::vector<VkVertexInputAttributeDescription> &attributeDescriptions,
     const std::string vertShaderFilepath,
     const std::string fragShaderFilepath) {
-  
+
   assert(pipelineLayout != nullptr &&
          "Cannot create pipeline before swapchain layout");
 
@@ -132,7 +137,8 @@ void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
   }
 }
 
-void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines, State &state) {
+void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines,
+                               State &state) {
   linePipeline->bind(frameInfo.commandBuffer);
   vkCmdSetLineWidth(frameInfo.commandBuffer, state.lineWidth);
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,

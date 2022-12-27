@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 class RenderSystem {
@@ -28,7 +29,9 @@ public:
 
 private:
   void createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
-                            VkPipelineLayout &pipelineLayout);
+                            VkPipelineLayout &pipelineLayout,
+                            bool WITH_CONSTANTS = false);
+  void createPipelineLayouts(VkDescriptorSetLayout globalSetLayout);
   void createPipeline(
       VkRenderPass renderPass, std::unique_ptr<Pipeline> &pipeline,
       VkPipelineLayout pipelineLayout, PipelineConfigInfo &pipelineConfig,
