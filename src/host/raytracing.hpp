@@ -20,9 +20,14 @@ private:
   //std::shared_ptr<const std::vector<OrayObject>> orayObjects;
   std::unique_ptr<Buffer> blasBuffer;
   VkAccelerationStructureKHR blas;
-  std::unique_ptr<Buffer> instanceBuffer;
+  std::unique_ptr<Buffer> tlasBuffer;
   VkAccelerationStructureKHR tlas;
-  void buildAccelerationStructure(std::vector<OrayObject> &orayObjects);
+
+  std::unique_ptr<Buffer> instanceBuffer;
+  void buildBLAS(std::vector<OrayObject> &orayObjects);
+  void buildTLAS();
+  void createDescriptorSetLayout();
+  void createeDescriptorPool();
 
   VkAccelerationStructureInstanceKHR instance{};
 };
