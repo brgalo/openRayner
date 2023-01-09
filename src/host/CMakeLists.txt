@@ -9,6 +9,8 @@ add_library(renderer app.hpp
                      device.cpp
                      device.hpp
                      frameinfo.hpp
+                     functions.hpp
+                     functions.cpp
                      geometry.hpp
                      geometry.cpp
                      keyboard.hpp
@@ -17,6 +19,8 @@ add_library(renderer app.hpp
                      orayobject.cpp
                      pipeline.cpp
                      pipeline.hpp
+                     raytracing.hpp
+                     raytracing.cpp
                      renderer.hpp
                      renderer.cpp
                      rendersystem.hpp
@@ -34,7 +38,8 @@ add_library(gui gui.hpp
                      
 target_link_libraries(renderer PRIVATE glfw
                                PRIVATE glm::glm
-                               PRIVATE gui)
+                               PRIVATE gui
+                               PRIVATE Vulkan::Vulkan)
 #if(MSVC)
 #    target_compile_options(renderer PRIVATE /W4 /WX)
 #else()

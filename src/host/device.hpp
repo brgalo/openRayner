@@ -5,7 +5,6 @@
 // std lib headers
 #include <string>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -63,7 +62,8 @@ public:
   // Buffer Helper Functions
   void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                    VkDeviceMemory &bufferMemory);
+                    VkDeviceMemory &bufferMemory,
+                    bool addressable = false);
   VkCommandBuffer beginSingleTimeCommands();
   void endSingleTimeCommands(VkCommandBuffer commandBuffer);
   void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

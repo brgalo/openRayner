@@ -5,6 +5,7 @@
 #include "orayobject.hpp"
 #include "renderer.hpp"
 #include "window.hpp"
+#include "raytracing.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -32,9 +33,12 @@ private:
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
   Renderer renderer{window, device, state};
-
+  
   std::unique_ptr<DescriptorPool> globalPool{};
-  std::vector<OrayObject> orayObjects;
+  std::shared_ptr<std::vector<OrayObject>> orayObjects =
+      std::make_shared<std::vector<OrayObject>>();
+
+  std::unique_ptr<Raytracer> raytracer;
 };
 
 } // namespace oray

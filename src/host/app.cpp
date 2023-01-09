@@ -11,6 +11,7 @@
 #include "glm/geometric.hpp"
 #include "keyboard.hpp"
 #include "pipeline.hpp"
+#include "raytracing.hpp"
 #include "rendersystem.hpp"
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -42,6 +43,7 @@ Application::Application() {
                                 SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
   loadOrayObjects();
+  raytracer = std::make_unique<Raytracer>(device, *orayObjects);
 }
 
 Application::~Application() {
@@ -133,7 +135,7 @@ void Application::run() {
 
       // rendering
       renderer.beginSwapchainRenderPass(commandBuffer);
-      renderSystem.renderOrayObjects(frameInfo, orayObjects);
+      renderSystem.renderOrayObjects(frameInfo, *orayObjects);
       renderSystem.renderLines(frameInfo, lineBuffer, state);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.renderGui(commandBuffer);
@@ -204,7 +206,7 @@ void Application::loadOrayObjects() {
   orayObj.geom = geometry;
   orayObj.transform.translation = {.0f, .0f, 2.5f};
   orayObj.transform.scale = {3.f, 3.f, 3.f};
-  orayObjects.push_back(std::move(orayObj));
+  orayObjects->push_back(std::move(orayObj));
 }
 
 } // namespace oray

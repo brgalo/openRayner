@@ -150,10 +150,16 @@ void Device::createLogicalDevice() {
 
   VkPhysicalDeviceFeatures deviceFeatures = {};
   deviceFeatures.samplerAnisotropy = VK_TRUE;
-  deviceFeatures.wideLines = VK_TRUE;  // wide lines for 
+  deviceFeatures.wideLines = VK_TRUE; // wide lines for
+
+  VkPhysicalDeviceVulkan12Features deviceFeatures12 = {};
+  deviceFeatures12.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+  deviceFeatures12.bufferDeviceAddress = VK_TRUE;
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  createInfo.pNext = &deviceFeatures12;
 
   createInfo.queueCreateInfoCount =
       static_cast<uint32_t>(queueCreateInfos.size());
@@ -421,7 +427,7 @@ uint32_t Device::findMemoryType(uint32_t typeFilter,
 
 void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                           VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                          VkDeviceMemory &bufferMemory) {
+                          VkDeviceMemory &bufferMemory, bool addressable) {
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   bufferInfo.size = size;
@@ -440,6 +446,13 @@ void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
   allocInfo.allocationSize = memRequirements.size;
   allocInfo.memoryTypeIndex =
       findMemoryType(memRequirements.memoryTypeBits, properties);
+
+  VkMemoryAllocateFlagsInfo flagsInfo{};
+  if (addressable) {
+    flagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+    flagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+    allocInfo.pNext = &flagsInfo;
+  }
 
   if (vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) !=
       VK_SUCCESS) {

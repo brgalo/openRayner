@@ -10,40 +10,39 @@
 // std
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
 /**
- * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
+ * Returns the minimum instance size required to be compatible with devices
+ * minOffsetAlignment
  *
  * @param instanceSize The size of an instance
- * @param minOffsetAlignment The minimum required alignment, in bytes, for the offset member (eg
- * minUniformBufferOffsetAlignment)
+ * @param minOffsetAlignment The minimum required alignment, in bytes, for the
+ * offset member (eg minUniformBufferOffsetAlignment)
  *
  * @return VkResult of the buffer mapping call
  */
-VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
+VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize,
+                                  VkDeviceSize minOffsetAlignment) {
   if (minOffsetAlignment > 0) {
     return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
   }
   return instanceSize;
 }
 
-Buffer::Buffer(
-    Device &device,
-    VkDeviceSize instanceSize,
-    uint32_t instanceCount,
-    VkBufferUsageFlags usageFlags,
-    VkMemoryPropertyFlags memoryPropertyFlags,
-    VkDeviceSize minOffsetAlignment)
-    : device{device},
-      instanceSize{instanceSize},
-      instanceCount{instanceCount},
-      usageFlags{usageFlags},
-      memoryPropertyFlags{memoryPropertyFlags} {
+Buffer::Buffer(Device &device, VkDeviceSize instanceSize,
+               uint32_t instanceCount, VkBufferUsageFlags usageFlags,
+               VkMemoryPropertyFlags memoryPropertyFlags,
+               VkDeviceSize minOffsetAlignment, bool addressable)
+    : device{device}, instanceSize{instanceSize}, instanceCount{instanceCount},
+      usageFlags{usageFlags}, memoryPropertyFlags{memoryPropertyFlags}, addressable{addressable} {
   alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
   bufferSize = alignmentSize * instanceCount;
-  device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
+  device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer,
+                      memory, addressable);
 }
 
 Buffer::~Buffer() {
@@ -52,11 +51,22 @@ Buffer::~Buffer() {
   vkFreeMemory(device.device(), memory, nullptr);
 }
 
+VkDeviceAddress Buffer::getAddress() {
+  if (!addressable)
+    throw std::runtime_error("trying to adress nonadressable buffer");
+
+  VkBufferDeviceAddressInfo addressInfo{};
+  addressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+  addressInfo.buffer = buffer;
+  return vkGetBufferDeviceAddress(device.device(), &addressInfo);
+}
+
 /**
- * Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
+ * Map a memory range of this buffer. If successful, mapped points to the
+ * specified buffer range.
  *
- * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to map the complete
- * buffer range.
+ * @param size (Optional) Size of the memory range to map. Pass VK_WHOLE_SIZE to
+ * map the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the buffer mapping call
@@ -79,11 +89,12 @@ void Buffer::unmap() {
 }
 
 /**
- * Copies the specified data to the mapped buffer. Default value writes whole buffer range
+ * Copies the specified data to the mapped buffer. Default value writes whole
+ * buffer range
  *
  * @param data Pointer to the data to copy
- * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush the complete buffer
- * range.
+ * @param size (Optional) Size of the data to copy. Pass VK_WHOLE_SIZE to flush
+ * the complete buffer range.
  * @param offset (Optional) Byte offset from beginning of mapped region
  *
  */
@@ -104,8 +115,8 @@ void Buffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
  *
  * @note Only required for non-coherent memory
  *
- * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE to flush the
- * complete buffer range.
+ * @param size (Optional) Size of the memory range to flush. Pass VK_WHOLE_SIZE
+ * to flush the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the flush call
@@ -124,8 +135,8 @@ VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset) {
  *
  * @note Only required for non-coherent memory
  *
- * @param size (Optional) Size of the memory range to invalidate. Pass VK_WHOLE_SIZE to invalidate
- * the complete buffer range.
+ * @param size (Optional) Size of the memory range to invalidate. Pass
+ * VK_WHOLE_SIZE to invalidate the complete buffer range.
  * @param offset (Optional) Byte offset from beginning
  *
  * @return VkResult of the invalidate call
@@ -147,7 +158,8 @@ VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset) {
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) {
+VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size,
+                                              VkDeviceSize offset) {
   return VkDescriptorBufferInfo{
       buffer,
       offset,
@@ -156,7 +168,8 @@ VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize of
 }
 
 /**
- * Copies "instanceSize" bytes of data to the mapped buffer at an offset of index * alignmentSize
+ * Copies "instanceSize" bytes of data to the mapped buffer at an offset of
+ * index * alignmentSize
  *
  * @param data Pointer to the data to copy
  * @param index Used in offset calculation
@@ -167,12 +180,12 @@ void Buffer::writeToIndex(void *data, int index) {
 }
 
 /**
- *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the device
- *
- * @param index Used in offset calculation
+ *  Flush the memory range at index * alignmentSize of the buffer to m
  *
  */
-VkResult Buffer::flushIndex(int index) { return flush(alignmentSize, index * alignmentSize); }
+VkResult Buffer::flushIndex(int index) {
+  return flush(alignmentSize, index * alignmentSize);
+}
 
 /**
  * Create a buffer info descriptor
@@ -198,4 +211,4 @@ VkResult Buffer::invalidateIndex(int index) {
   return invalidate(alignmentSize, index * alignmentSize);
 }
 
-}  // namespace lve
+} // namespace oray

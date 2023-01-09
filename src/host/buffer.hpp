@@ -1,6 +1,7 @@
 #pragma once
 
 #include "device.hpp"
+#include "functions.hpp"
 
 namespace oray {
 
@@ -9,7 +10,8 @@ public:
   Buffer(Device &device, VkDeviceSize instanceSize, uint32_t instanceCount,
          VkBufferUsageFlags usageFlags,
          VkMemoryPropertyFlags memoryPropertyFlags,
-         VkDeviceSize minOffsetAlignment = 1);
+         VkDeviceSize minOffsetAlignment = 1,
+         bool addressable = false);
   ~Buffer();
 
   Buffer(const Buffer &) = delete;
@@ -41,6 +43,7 @@ public:
     return memoryPropertyFlags;
   }
   VkDeviceSize getBufferSize() const { return bufferSize; }
+  VkDeviceAddress getAddress();
 
 private:
   static VkDeviceSize getAlignment(VkDeviceSize instanceSize,
@@ -57,6 +60,8 @@ private:
   VkDeviceSize alignmentSize;
   VkBufferUsageFlags usageFlags;
   VkMemoryPropertyFlags memoryPropertyFlags;
+
+  bool addressable = false;
 };
 
 } // namespace oray
