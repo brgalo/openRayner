@@ -112,6 +112,8 @@ void Raytracer::buildAccelerationStructure(std::vector<OrayObject> &orayObjects)
   instanceBuffer =
       std::make_unique<Buffer>(device, sizeof(instance), 1,
                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, 0);
+
+  
 }
 
 } // namespace oray
