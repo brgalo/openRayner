@@ -36,9 +36,12 @@ VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize,
 Buffer::Buffer(Device &device, VkDeviceSize instanceSize,
                uint32_t instanceCount, VkBufferUsageFlags usageFlags,
                VkMemoryPropertyFlags memoryPropertyFlags,
-               VkDeviceSize minOffsetAlignment, bool addressable)
+               VkDeviceSize minOffsetAlignment)
     : device{device}, instanceSize{instanceSize}, instanceCount{instanceCount},
-      usageFlags{usageFlags}, memoryPropertyFlags{memoryPropertyFlags}, addressable{addressable} {
+      usageFlags{usageFlags}, memoryPropertyFlags{memoryPropertyFlags} {
+  if ((usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0) {
+    addressable = true;
+  }
   alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
   bufferSize = alignmentSize * instanceCount;
   device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer,

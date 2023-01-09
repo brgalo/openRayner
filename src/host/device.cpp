@@ -148,24 +148,46 @@ void Device::createLogicalDevice() {
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
-  VkPhysicalDeviceFeatures deviceFeatures = {};
-  deviceFeatures.samplerAnisotropy = VK_TRUE;
-  deviceFeatures.wideLines = VK_TRUE; // wide lines for
-
-  VkPhysicalDeviceVulkan12Features deviceFeatures12 = {};
-  deviceFeatures12.sType =
+  // create raytracing pNext chain
+  VkPhysicalDeviceFeatures2 features2{
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+  features2.features.wideLines = VK_TRUE;
+  features2.features.samplerAnisotropy = VK_TRUE;
+  /*
+    VkPhysicalDeviceFeatures deviceFeatures = {};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.wideLines = VK_TRUE; // wide lines for
+  */
+  
+  VkPhysicalDeviceVulkan12Features features12 = {};
+  features12.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-  deviceFeatures12.bufferDeviceAddress = VK_TRUE;
+  features12.bufferDeviceAddress = VK_TRUE;
+  features12.pNext = &features2;
+
+  VkPhysicalDeviceVulkan11Features features11 = {};
+  features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+  features11.pNext = &features12;
+
+  VkPhysicalDeviceAccelerationStructureFeaturesKHR asFeatures{
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
+  asFeatures.accelerationStructure = VK_TRUE;
+  asFeatures.pNext = &features11;
+
+  VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtFeatures{
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR};
+  rtFeatures.rayTracingPipeline = VK_TRUE;
+  rtFeatures.pNext = &asFeatures;
 
   VkDeviceCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  createInfo.pNext = &deviceFeatures12;
+  createInfo.pNext = &rtFeatures;
 
   createInfo.queueCreateInfoCount =
       static_cast<uint32_t>(queueCreateInfos.size());
   createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-  createInfo.pEnabledFeatures = &deviceFeatures;
+  createInfo.pEnabledFeatures = NULL;
   createInfo.enabledExtensionCount =
       static_cast<uint32_t>(deviceExtensions.size());
   createInfo.ppEnabledExtensionNames = deviceExtensions.data();

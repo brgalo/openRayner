@@ -67,8 +67,8 @@ void Geometry::createVertexBuffers(
   vertexBuffer = std::make_unique<Buffer>(
       device, vertexSize, vertexCount,
       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, true);
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(),
                     bufferSize);
@@ -100,8 +100,8 @@ void Geometry::createIndexBuffers(const std::vector<uint32_t> &indices) {
   indexBuffer = std::make_unique<Buffer>(
       device, indexSize, indexCount,
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, true);
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(),
                     bufferSize);
 }
