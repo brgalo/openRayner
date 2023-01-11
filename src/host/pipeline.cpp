@@ -114,7 +114,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code,
                                   VkShaderModule *shaderModule) {
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
+  createInfo.codeSize = static_cast<uint32_t>(code.size());
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
   if (vkCreateShaderModule(device.device(), &createInfo, nullptr,
@@ -122,6 +122,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code,
     throw std::runtime_error("error creating shader module!");
   }
 }
+
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
   vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

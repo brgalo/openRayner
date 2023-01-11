@@ -3,6 +3,7 @@
 #include "device.hpp"
 #include "orayobject.hpp"
 #include "functions.hpp"
+#include <array>
 #include <memory>
 #include <vulkan/vulkan_core.h>
 
@@ -24,10 +25,28 @@ private:
   VkAccelerationStructureKHR tlas;
 
   std::unique_ptr<Buffer> instanceBuffer;
+
+  std::array<VkDescriptorSetLayoutBinding, 4> bindings;
+
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorPool descriptorPool;
+
+  VkShaderModule rayGenShader;
+  VkShaderModule chShader;
+  VkShaderModule missShader;
+
+  VkPipelineLayout rtPipelineLayout;
+  VkPipeline rtPipeline;
+
   void buildBLAS(std::vector<OrayObject> &orayObjects);
   void buildTLAS();
   void createDescriptorSetLayout();
-  void createeDescriptorPool();
+  void createDescriptorPool();
+  void createShaderModules();
+  void createRtPipelineLayout();
+  void createRtPipeline();
+
+  VkShaderModule createShaderModule(const std::string &filepath);
 
   VkAccelerationStructureInstanceKHR instance{};
 };

@@ -22,6 +22,9 @@ VulkanFunctions::VulkanFunctions(VkDevice device) {
   vkDestroyAccelerationStructureKHR =
       reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(
           vkGetDeviceProcAddr(device, "vkDestroyAccelerationStructureKHR"));
+  vkCreateRayTracingPipelinesKHR =
+      reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(
+          vkGetDeviceProcAddr(device, "vkCreateRayTracingPipelinesKHR"));
 }
 
 VulkanFunctions::~VulkanFunctions() {

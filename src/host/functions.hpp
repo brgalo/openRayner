@@ -12,5 +12,6 @@ public:
   PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructuresKHR;
   PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddressKHR;
   PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructureKHR;
+  PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelinesKHR;
 };
 }

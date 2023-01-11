@@ -44,11 +44,12 @@ public:
 
   void bind(VkCommandBuffer commandBuffer);
 
-private:
   static std::vector<char> readFile(const std::string &filepath);
-  void createPipeline(
-      const std::string &vertFilepath, const std::string &fragFilepath,
-      const PipelineConfigInfo &configInfo);
+
+private:
+  void createPipeline(const std::string &vertFilepath,
+                      const std::string &fragFilepath,
+                      const PipelineConfigInfo &configInfo);
 
   void createShaderModule(const std::vector<char> &code,
                           VkShaderModule *shaderModule);
@@ -60,6 +61,5 @@ private:
   VkShaderModule fragShaderModule;
   std::vector<VkVertexInputBindingDescription> bindingDescriptions;
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
-  
 };
 } // namespace oray

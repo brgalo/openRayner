@@ -1,6 +1,9 @@
 #include "raytracing.hpp"
 #include "buffer.hpp"
+#include "descriptors.hpp"
 #include "device.hpp"
+#include "pipeline.hpp"
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -13,7 +16,10 @@ Raytracer::Raytracer(Device &device, std::vector<OrayObject> &orayObjects)
   buildBLAS(orayObjects);
   buildTLAS();
   createDescriptorSetLayout();
-  createeDescriptorPool();
+  createDescriptorPool();
+  createShaderModules();
+  createRtPipelineLayout();
+  createRtPipeline();
 }
 
 Raytracer::~Raytracer() {
@@ -122,7 +128,7 @@ void Raytracer::buildTLAS() {
   instanceBuffer =
       std::make_unique<Buffer>(device, sizeof(instance), 1,
                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   device.copyBuffer(stagingBuffer.getBuffer(), instanceBuffer->getBuffer(),
                     sizeof(instance));
@@ -189,12 +195,136 @@ void Raytracer::buildTLAS() {
   VkAccelerationStructureBuildRangeInfoKHR *pRangeInfo = &rangeInfo;
 
   VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
-  vkCmdBuildAccelerationStructuresKHR(commandBuffer, 1, &buildInfo,
-                                      &pRangeInfo);
+  f.vkCmdBuildAccelerationStructuresKHR(commandBuffer, 1, &buildInfo,
+                                        &pRangeInfo);
   device.endSingleTimeCommands(commandBuffer);
   vkDeviceWaitIdle(device.device());
 }
 
+void Raytracer::createDescriptorSetLayout() {
+  bindings[0].binding = 0;
+  bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  bindings[0].descriptorCount = 1;
+  bindings[0].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
+  bindings[1] = bindings[0];
+  bindings[1].binding = 2;
+
+  bindings[2] = bindings[0];
+  bindings[2].binding = 3;
+
+  bindings[3] = bindings[0];
+  bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+  bindings[3].descriptorCount = 1;
+  bindings[3].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+  bindings[3].binding = 1;
+
+  VkDescriptorSetLayoutCreateInfo layoutInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+  layoutInfo.pBindings = bindings.data();
+  if (vkCreateDescriptorSetLayout(device.device(), &layoutInfo, nullptr,
+                                  &descriptorSetLayout) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create rt descriptor set layout!");
+  }
+}
+
+void Raytracer::createDescriptorPool() {
+  std::array<VkDescriptorPoolSize, 2> poolSizes;
+  poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  poolSizes[0].descriptorCount = 3;
+
+  poolSizes[1].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+  poolSizes[1].descriptorCount = 1;
+
+  VkDescriptorPoolCreateInfo descriptorPoolInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  descriptorPoolInfo.maxSets = 1;
+  descriptorPoolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+  descriptorPoolInfo.pPoolSizes = poolSizes.data();
+  if (vkCreateDescriptorPool(device.device(), &descriptorPoolInfo, nullptr,
+                             &descriptorPool) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create rt desctiptor pool!");
+  };
+}
+
+void Raytracer::createShaderModules() {
+  rayGenShader = createShaderModule("spv/raygen.rgen.spv");
+  chShader = createShaderModule("spv/closesthit.rchit.spv");
+  missShader = createShaderModule("spv/raygen.rgen.spv");
+}
+
+VkShaderModule Raytracer::createShaderModule(const std::string &filepath) {
+  VkShaderModule ret;
+  auto code = Pipeline::readFile(filepath);
+  VkShaderModuleCreateInfo createInfo{
+      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+  createInfo.codeSize = static_cast<uint32_t>(code.size());
+  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+
+  if (vkCreateShaderModule(device.device(), &createInfo, nullptr, &ret) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("failed to create RT shader module!");
+  }
+  return ret;
+}
+
+void Raytracer::createRtPipelineLayout() {
+  VkPipelineLayoutCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  createInfo.setLayoutCount = 1;
+  createInfo.pSetLayouts = &descriptorSetLayout;
+
+  if (vkCreatePipelineLayout(device.device(), &createInfo, nullptr,
+                             &rtPipelineLayout) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create rt pipeline layout!");
+  }
+}
+
+void Raytracer::createRtPipeline() {
+  // TODO: rename shader entry points to correspond to programm!
+  std::array<VkPipelineShaderStageCreateInfo, 3> pssci{};
+  pssci[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  pssci[0].module = rayGenShader;
+  pssci[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+  pssci[0].pName = "main";
+
+  pssci[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  pssci[1].module = chShader;
+  pssci[1].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+  pssci[1].pName = "main";
+
+  pssci[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  pssci[2].module = missShader;
+  pssci[2].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+  pssci[2].pName = "main";
+
+  std::array<VkRayTracingShaderGroupCreateInfoKHR, 3> rtsgci{};
+  rtsgci[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+  rtsgci[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+  rtsgci[0].generalShader = 0;
+
+  rtsgci[1].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+  rtsgci[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+  rtsgci[1].closestHitShader = 1;
+
+  rtsgci[2].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+  rtsgci[2].generalShader = 2;
+
+  VkRayTracingPipelineCreateInfoKHR rtpci{
+      VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR};
+  rtpci.stageCount = static_cast<uint32_t>(pssci.size());
+  rtpci.pStages = pssci.data();
+  rtpci.groupCount = static_cast<uint32_t>(rtsgci.size());
+  rtpci.pGroups = rtsgci.data();
+  rtpci.maxPipelineRayRecursionDepth = 0;
+  rtpci.layout = rtPipelineLayout;
+
+  if (f.vkCreateRayTracingPipelinesKHR(device.device(), VK_NULL_HANDLE,
+                                     VK_NULL_HANDLE, 1, &rtpci, nullptr,
+                                     &rtPipeline) != VK_SUCCESS) {
+    throw std::runtime_error("failed to createpipeline!");
+  }
+}
 
 } // namespace oray

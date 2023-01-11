@@ -8,7 +8,10 @@ set(SHADER_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # add shader files to list
 file(GLOB GLSL_SOURCE_FILES
     "*.frag"
-    "*.vert")
+    "*.vert"
+    "*.rmiss"
+    "*.rchit"
+    "*.rgen")
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILENAME ${GLSL} NAME)
@@ -17,7 +20,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     add_custom_command(
         OUTPUT ${SPIRV}
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/spv"
-        COMMAND glslc ${GLSL} -o ${SPIRV}
+        COMMAND glslc ${GLSL} -o ${SPIRV} --target-env=vulkan1.2
         DEPENDS ${GLSL}
     )
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
