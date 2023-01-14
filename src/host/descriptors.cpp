@@ -142,7 +142,7 @@ DescriptorWriter::DescriptorWriter(DescriptorSetLayout &setLayout,
 
 bool DescriptorWriter::writeandBuildTLAS(uint32_t binding,
                                     VkAccelerationStructureKHR *pTLAS,
-                                    VkDescriptorSet descriptorSet) {
+                                    VkDescriptorSet &descriptorSet) {
   assert(setLayout.bindings.count(binding) == 1 &&
          "Layout does not contain TLAS binding!");
   VkWriteDescriptorSetAccelerationStructureKHR

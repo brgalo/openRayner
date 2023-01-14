@@ -30,6 +30,12 @@ Raytracer::Raytracer(Device &device, std::vector<OrayObject> const &orayObjects)
 
 Raytracer::~Raytracer() {
   f.vkDestroyAccelerationStructureKHR(device.device(), blas, nullptr);
+  f.vkDestroyAccelerationStructureKHR(device.device(), tlas, nullptr);
+  vkDestroyShaderModule(device.device(), rayGenShader, nullptr);
+  vkDestroyShaderModule(device.device(), chShader, nullptr);
+  vkDestroyShaderModule(device.device(), missShader, nullptr);
+  vkDestroyPipeline(device.device(), rtPipeline, nullptr);
+  vkDestroyPipelineLayout(device.device(), rtPipelineLayout, nullptr);
 }
 
 uint32_t Raytracer::alignUp(uint32_t val, uint32_t align) {
@@ -262,7 +268,7 @@ void Raytracer::createRtPipelineLayout() {
   constantsRanges.size = sizeof(RtPushConstants);
   constantsRanges.offset = 0;
   constantsRanges.stageFlags =
-      VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+      VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
   createInfo.pushConstantRangeCount = 1;
   createInfo.pPushConstantRanges = &constantsRanges;

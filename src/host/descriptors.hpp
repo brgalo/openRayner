@@ -95,7 +95,7 @@ public:
 
   bool writeandBuildTLAS(uint32_t binding,
                                       VkAccelerationStructureKHR *pTLAS,
-                                      VkDescriptorSet descriptorSet);
+                                      VkDescriptorSet &descriptorSet);
 
   DescriptorWriter &writeBuffer(uint32_t binding,
                                 VkDescriptorBufferInfo *bufferInfo);
