@@ -1,17 +1,31 @@
 #version 460
 #extension GL_EXT_ray_tracing : require
 
+struct Constants {
+    int nRays;
+    bool recordOri;
+    bool recordDir;
+    bool recordHit;
+};
 
-layout(location = 0) rayPayloadEXT vec3 pay;
+struct RayPayload {
+    bool hit;
+    float energy;
+};
 
-layout(binding = 0, set = 0) uniform accelerationStructureEXT scene;
 
+
+layout(push_constant) uniform Constants;
+
+layout(location = 0) rayPayloadEXT RayPayload payload;
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT scene;
 void main() {
     uvec2 pixel = gl_LaunchIDEXT.xy;
     vec3 pos = vec3(0,0,-1);
     vec3 dir = vec3(0,0,1);
 
-    pay = vec3(0);
+    payload.hit = false;
 
     traceRayEXT(
         scene,

@@ -13,5 +13,6 @@ public:
   PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddressKHR;
   PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructureKHR;
   PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelinesKHR;
+  PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandlesKHR;
 };
 }

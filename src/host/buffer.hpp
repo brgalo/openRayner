@@ -2,6 +2,7 @@
 
 #include "device.hpp"
 #include "functions.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -43,6 +44,9 @@ public:
   }
   VkDeviceSize getBufferSize() const { return bufferSize; }
   VkDeviceAddress getAddress();
+
+  // no checking, if actually the right buffer!
+  VkWriteDescriptorSetAccelerationStructureKHR getTLASDescrptorWriteInfo();
 
 private:
   static VkDeviceSize getAlignment(VkDeviceSize instanceSize,

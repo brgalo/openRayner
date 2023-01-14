@@ -25,6 +25,9 @@ VulkanFunctions::VulkanFunctions(VkDevice device) {
   vkCreateRayTracingPipelinesKHR =
       reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(
           vkGetDeviceProcAddr(device, "vkCreateRayTracingPipelinesKHR"));
+  vkGetRayTracingShaderGroupHandlesKHR =
+      reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(
+          vkGetDeviceProcAddr(device, "vkGetRayTracingShaderGroupHandlesKHR"));
 }
 
 VulkanFunctions::~VulkanFunctions() {

@@ -3,9 +3,11 @@
 #include "device.hpp"
 
 // std
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -34,6 +36,9 @@ public:
   VkDescriptorSetLayout getDescriptorSetLayout() const {
     return descriptorSetLayout;
   }
+  const VkDescriptorSetLayout *getDescriptorSetLayoutPointer() const {
+    return &descriptorSetLayout;
+  }
 
 private:
   Device &device;
@@ -53,6 +58,7 @@ public:
     Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
     Builder &setMaxSets(uint32_t count);
     std::unique_ptr<DescriptorPool> build() const;
+    
 
   private:
     Device &device;
@@ -74,7 +80,8 @@ public:
   void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
   void resetPool();
-
+  
+  VkDescriptorPool &getDescriptorPool() {return descriptorPool;};
 private:
   Device &device;
   VkDescriptorPool descriptorPool;
@@ -85,6 +92,10 @@ private:
 class DescriptorWriter {
 public:
   DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPool &pool);
+
+  bool writeandBuildTLAS(uint32_t binding,
+                                      VkAccelerationStructureKHR *pTLAS,
+                                      VkDescriptorSet descriptorSet);
 
   DescriptorWriter &writeBuffer(uint32_t binding,
                                 VkDescriptorBufferInfo *bufferInfo);

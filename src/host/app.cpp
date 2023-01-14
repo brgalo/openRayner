@@ -44,6 +44,10 @@ Application::Application() {
                    .build();
   loadOrayObjects();
   raytracer = std::make_unique<Raytracer>(device, *orayObjects);
+  VkCommandBuffer buf = device.beginSingleTimeCommands();
+  raytracer->traceTriangle(buf, 10, 1, false, false, false);
+  device.endSingleTimeCommands(buf);
+  vkDeviceWaitIdle(device.device());
 }
 
 Application::~Application() {

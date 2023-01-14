@@ -3,6 +3,7 @@
 // std
 #include <cassert>
 #include <stdexcept>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -138,6 +139,29 @@ void DescriptorPool::resetPool() {
 DescriptorWriter::DescriptorWriter(DescriptorSetLayout &setLayout,
                                    DescriptorPool &pool)
     : setLayout{setLayout}, pool{pool} {}
+
+bool DescriptorWriter::writeandBuildTLAS(uint32_t binding,
+                                    VkAccelerationStructureKHR *pTLAS,
+                                    VkDescriptorSet descriptorSet) {
+  assert(setLayout.bindings.count(binding) == 1 &&
+         "Layout does not contain TLAS binding!");
+  VkWriteDescriptorSetAccelerationStructureKHR
+      descriptorAccelerationStructure{};
+  descriptorAccelerationStructure.sType =
+      VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+  descriptorAccelerationStructure.accelerationStructureCount = 1;
+  descriptorAccelerationStructure.pAccelerationStructures = pTLAS;
+
+  VkWriteDescriptorSet tlasWrite{};
+  tlasWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  tlasWrite.pNext = &descriptorAccelerationStructure;
+  tlasWrite.dstSet = descriptorSet;
+  tlasWrite.descriptorCount = 1;
+  tlasWrite.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+
+  writes.push_back(tlasWrite);
+  return this->build(descriptorSet);
+}
 
 DescriptorWriter &
 DescriptorWriter::writeBuffer(uint32_t binding,
