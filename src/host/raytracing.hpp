@@ -21,6 +21,7 @@ public:
   void traceTriangle(VkCommandBuffer cmdBuf, uint64_t nRays,
                      uint64_t triangleIdx, bool recOri, bool recDir,
                      bool recHit);
+  std::vector<glm::vec4> getOutputBuffer();
 
 private:
   Device &device;
@@ -31,6 +32,8 @@ private:
   std::unique_ptr<Buffer> tlasBuffer;
   VkAccelerationStructureKHR tlas;
   std::unique_ptr<Buffer> sbtBuffer;
+
+  std::unique_ptr<Buffer> outputBuffer;
 
   std::unique_ptr<Buffer> instanceBuffer;
 

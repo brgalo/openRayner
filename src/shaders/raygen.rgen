@@ -1,4 +1,5 @@
 #version 460
+
 #extension GL_EXT_ray_tracing : require
 
 struct Constants {
@@ -20,12 +21,17 @@ layout(push_constant) uniform Constants;
 layout(location = 0) rayPayloadEXT RayPayload payload;
 
 layout(set = 0, binding = 0) uniform accelerationStructureEXT scene;
+layout(set = 0, binding = 1) buffer buf{
+    vec3 data[];
+};
+
 void main() {
     uvec2 pixel = gl_LaunchIDEXT.xy;
     vec3 pos = vec3(0,0,-1);
     vec3 dir = vec3(0,0,1);
 
-    payload.hit = false;
+    payload.hit = true;
+    data[pixel.x].x = pixel.x*pixel.x;
 
     traceRayEXT(
         scene,
@@ -40,4 +46,7 @@ void main() {
         1000,
         0
     );
+    if(payload.hit == false) {
+        data[pixel.x].y = 1;
+    }
 }

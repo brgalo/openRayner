@@ -2,6 +2,7 @@
 #include "buffer.hpp"
 #include "descriptors.hpp"
 #include "device.hpp"
+#include "glm/fwd.hpp"
 #include "pipeline.hpp"
 #include <algorithm>
 #include <array>
@@ -18,6 +19,7 @@ namespace oray {
 
 Raytracer::Raytracer(Device &device, std::vector<OrayObject> const &orayObjects)
     : device(device) {
+  
   buildBLAS(orayObjects);
   buildTLAS();
   rtDescriptorSetLayout = createDescriptorSetLayout();
@@ -43,6 +45,12 @@ uint32_t Raytracer::alignUp(uint32_t val, uint32_t align) {
   if (remainder == 0)
     return val;
   return val + align - remainder;
+}
+
+std::vector<glm::vec4> Raytracer::getOutputBuffer() {
+  std::vector<glm::vec4> out(10);
+  outputBuffer->readFromBuffer(out.data());
+  return out;
 }
 
 void Raytracer::buildBLAS(std::vector<OrayObject> const &orayObjects) {
@@ -222,16 +230,17 @@ void Raytracer::buildTLAS() {
 }
 
 std::unique_ptr<DescriptorSetLayout> Raytracer::createDescriptorSetLayout() {
-  return DescriptorSetLayout::Builder(device)
-      .addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-                  VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+  return DescriptorSetLayout::Builder(device).addBinding(
+      0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+      VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+      .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
       .build();
 }
 
 std::unique_ptr<DescriptorPool> Raytracer::createDescriptorPool() {
   return DescriptorPool::Builder(device)
       .addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1)
-      .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+      .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
       .setMaxSets(1)
       .build();
 }
@@ -408,9 +417,17 @@ void Raytracer::createRtPipeline() {
 }
 
 void Raytracer::initPushConstants(std::vector<OrayObject> const &orayObjects) {
-        DescriptorWriter(*rtDescriptorSetLayout, *rtDescriptorPool)
-      .writeandBuildTLAS(0, &tlas,
-                         rtDescriptorSet);
+  outputBuffer = std::make_unique<Buffer>(
+      device, sizeof(glm::vec4) * 10, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  outputBuffer->map();
+  
+  VkDescriptorBufferInfo bufferInfo = outputBuffer->descriptorInfo();
+  DescriptorWriter(*rtDescriptorSetLayout, *rtDescriptorPool)
+      .writeandBuildTLAS(0, &tlas, rtDescriptorSet, &bufferInfo);
+
+
   
 
   pushConstants.indexBuffer = orayObjects[0].geom->getIndexBufferAddress();

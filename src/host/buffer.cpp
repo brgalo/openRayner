@@ -113,6 +113,16 @@ void Buffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
   }
 }
 
+void Buffer::readFromBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
+  if (size == VK_WHOLE_SIZE) {
+    memcpy(data, mapped, bufferSize);
+  } else {
+    char *memOffset = static_cast<char *>(mapped);
+    memOffset += offset;
+    memcpy(data, memOffset, size);
+  }
+}
+
 /**
  * Flush a memory range of the buffer to make it visible to the device
  *

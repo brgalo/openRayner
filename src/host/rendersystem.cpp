@@ -64,7 +64,7 @@ void RenderSystem::createPipelineLayouts(
     VkDescriptorSetLayout globalSetLayout) {
   // triange
   createPipelineLayout(globalSetLayout, trianglePipelineLayout, true);
-  // lines 
+  // lines
   createPipelineLayout(globalSetLayout, linePipelineLayout);
 }
 

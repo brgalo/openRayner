@@ -48,6 +48,11 @@ Application::Application() {
   raytracer->traceTriangle(buf, 10, 1, false, false, false);
   device.endSingleTimeCommands(buf);
   vkDeviceWaitIdle(device.device());
+  std::vector<glm::vec4> output = raytracer->getOutputBuffer();
+
+  int i = 1;
+
+
 }
 
 Application::~Application() {
