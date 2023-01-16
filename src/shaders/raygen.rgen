@@ -2,11 +2,22 @@
 
 #extension GL_EXT_ray_tracing : require
 
+
+#extension GL_EXT_scalar_block_layout : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+#extension GL_EXT_buffer_reference2 : require
+
 struct Constants {
-    int nRays;
-    bool recordOri;
-    bool recordDir;
-    bool recordHit;
+  uint64_t indexBufferAdress;
+  uint64_t vertexBuffer;
+//  uint64_t oriBuffer;
+//  uint64_t dirBuffer;
+//  uint64_t hitBuffer;
+//  uint64_t triangleIndex;
+//  uint64_t nRays;
+//  bool recordOri;
+//  bool recordDir;
+//  bool recordHit;
 };
 
 struct RayPayload {
@@ -14,9 +25,11 @@ struct RayPayload {
     float energy;
 };
 
+layout(buffer_reference, std430, buffer_reference_align = 4) readonly buffer Indices{
+    uint idx[];
+};
 
-
-layout(push_constant) uniform Constants;
+layout(push_constant) uniform _Constants { Constants consts;};
 
 layout(location = 0) rayPayloadEXT RayPayload payload;
 
@@ -26,6 +39,9 @@ layout(set = 0, binding = 1) buffer buf{
 };
 
 void main() {
+
+    Indices indices = Indices(consts.indexBufferAdress);
+
     uvec2 pixel = gl_LaunchIDEXT.xy;
     vec3 pos = vec3(0,0,-1);
     vec3 dir = vec3(0,0,1);
@@ -49,4 +65,5 @@ void main() {
     if(payload.hit == false) {
         data[pixel.x].y = 1;
     }
+    data[pixel.x].z = float(indices.idx[pixel.x+18]);
 }
