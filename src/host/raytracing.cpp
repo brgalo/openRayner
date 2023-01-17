@@ -18,8 +18,8 @@
 namespace oray {
 
 Raytracer::Raytracer(Device &device, std::vector<OrayObject> const &orayObjects)
-    : device(device) {
-  
+    : device(device), nTrinagles(static_cast<uint32_t>(
+                          orayObjects[0].geom->getIndexCount() / 3)) {
   buildBLAS(orayObjects);
   buildTLAS();
   rtDescriptorSetLayout = createDescriptorSetLayout();
@@ -47,9 +47,12 @@ uint32_t Raytracer::alignUp(uint32_t val, uint32_t align) {
   return val + align - remainder;
 }
 
-std::vector<glm::vec4> Raytracer::getOutputBuffer() {
-  std::vector<glm::vec4> out(10);
-  outputBuffer->readFromBuffer(out.data());
+
+std::vector<glm::vec4> Raytracer::returnBuffer(Buffer &buf) {
+  std::vector<glm::vec4> out(nRays);
+  buf.map();
+  buf.readFromBuffer(out.data());
+  buf.unmap();
   return out;
 }
 
@@ -230,10 +233,11 @@ void Raytracer::buildTLAS() {
 }
 
 std::unique_ptr<DescriptorSetLayout> Raytracer::createDescriptorSetLayout() {
-  return DescriptorSetLayout::Builder(device).addBinding(
-      0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-      VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-      .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+  return DescriptorSetLayout::Builder(device)
+      .addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+                  VK_SHADER_STAGE_RAYGEN_BIT_KHR)
+      .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                  VK_SHADER_STAGE_RAYGEN_BIT_KHR)
       .build();
 }
 
@@ -276,8 +280,7 @@ void Raytracer::createRtPipelineLayout() {
   VkPushConstantRange constantsRanges{};
   constantsRanges.size = sizeof(RtPushConstants);
   constantsRanges.offset = 0;
-  constantsRanges.stageFlags =
-      VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+  constantsRanges.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
   createInfo.pushConstantRangeCount = 1;
   createInfo.pPushConstantRanges = &constantsRanges;
@@ -372,8 +375,8 @@ void Raytracer::createRtPipeline() {
   uint32_t dataSize = handleCount * handleSize;
   handles = std::vector<uint8_t>(dataSize);
   if (f.vkGetRayTracingShaderGroupHandlesKHR(device.device(), rtPipeline, 0,
-                                           handleCount, dataSize,
-                                           handles.data()) != VK_SUCCESS) {
+                                             handleCount, dataSize,
+                                             handles.data()) != VK_SUCCESS) {
     throw std::runtime_error("failed to retrieve shader group handles!");
   }
   VkDeviceSize sbtSize = rgenRegion.size + missRegion.size + hitRegion.size;
@@ -384,7 +387,7 @@ void Raytracer::createRtPipeline() {
                                    VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR,
                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  
+
   VkDeviceAddress sbtAdress = sbtBuffer->getAddress();
   rgenRegion.deviceAddress = sbtAdress;
   hitRegion.deviceAddress = sbtAdress + rgenRegion.size;
@@ -396,7 +399,7 @@ void Raytracer::createRtPipeline() {
 
   auto getHandle = [&](int i) { return handles.data() + i * handleSize; };
 
-  //raygen
+  // raygen
   memcpy(pData, getHandle(handleIdx++), handleSize);
 
   // chit
@@ -421,17 +424,28 @@ void Raytracer::initPushConstants(std::vector<OrayObject> const &orayObjects) {
       device, sizeof(glm::vec4) * 10, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  outputBuffer->map();
-  
+
   VkDescriptorBufferInfo bufferInfo = outputBuffer->descriptorInfo();
   DescriptorWriter(*rtDescriptorSetLayout, *rtDescriptorPool)
       .writeandBuildTLAS(0, &tlas, rtDescriptorSet, &bufferInfo);
 
-
-  
+  oriBuffer =
+      std::make_unique<Buffer>(device, sizeof(glm::vec4), nRays,
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  dirBuffer =
+      std::make_unique<Buffer>(device, sizeof(glm::vec4), nRays,
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   pushConstants.indexBuffer = orayObjects[0].geom->getIndexBufferAddress();
   pushConstants.vertexBuffer = orayObjects[0].geom->getVertexBufferAddress();
+  pushConstants.oriBuffer = oriBuffer->getAddress();
+  pushConstants.dirBuffer = dirBuffer->getAddress();
 }
 
 void Raytracer::traceTriangle(VkCommandBuffer cmdBuf, uint64_t nRays,
@@ -445,7 +459,7 @@ void Raytracer::traceTriangle(VkCommandBuffer cmdBuf, uint64_t nRays,
                      0, static_cast<uint32_t>(sizeof(pushConstants)),
                      &pushConstants);
   f.vkCmdTraceRaysKHR(cmdBuf, &rgenRegion, &missRegion, &hitRegion, &callRegion,
-                    10, 1, 1);
+                      nRays, 1, 1);
 }
 
 } // namespace oray

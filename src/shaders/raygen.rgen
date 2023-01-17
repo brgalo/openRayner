@@ -2,16 +2,18 @@
 
 #extension GL_EXT_ray_tracing : require
 
-
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 #extension GL_EXT_buffer_reference2 : require
 
+#include "structs.h"
+#include "random.glsl"
+
 struct Constants {
-  uint64_t indexBufferAdress;
-  uint64_t vertexBuffer;
-//  uint64_t oriBuffer;
-//  uint64_t dirBuffer;
+  uint64_t indexBufferAddress;
+  uint64_t vertexBufferAddress;
+  uint64_t oriBufferAddress;
+  uint64_t dirBufferAddress;
 //  uint64_t hitBuffer;
 //  uint64_t triangleIndex;
 //  uint64_t nRays;
@@ -25,9 +27,23 @@ struct RayPayload {
     float energy;
 };
 
+struct Vertex {
+    vec3 position;
+    vec3 color;
+    vec3 normal;
+    vec2 uv;
+};
+
 layout(buffer_reference, std430, buffer_reference_align = 4) readonly buffer Indices{
     uint idx[];
 };
+
+layout(buffer_reference, scalar) readonly buffer Vertices{
+    Vertex vert[];
+};
+
+layout(buffer_reference, scalar) buffer oriBuffer{vec4 ori[];};
+layout(buffer_reference, scalar) buffer dirBuffer{vec4 dir[];};
 
 layout(push_constant) uniform _Constants { Constants consts;};
 
@@ -35,19 +51,27 @@ layout(location = 0) rayPayloadEXT RayPayload payload;
 
 layout(set = 0, binding = 0) uniform accelerationStructureEXT scene;
 layout(set = 0, binding = 1) buffer buf{
-    vec3 data[];
+    vec4 data[];
 };
 
 void main() {
 
-    Indices indices = Indices(consts.indexBufferAdress);
-
+    Indices indices = Indices(consts.indexBufferAddress);
+    Vertices vertex = Vertices(consts.vertexBufferAddress);
+    oriBuffer oriBuf = oriBuffer(consts.oriBufferAddress);
+    dirBuffer dirBuf = dirBuffer(consts.dirBufferAddress);
+    
     uvec2 pixel = gl_LaunchIDEXT.xy;
+    uint seed = tea(pixel.x, pixel.y);
+
+//    uvec3 myIdx = uvec3(indices.idx[pixel.x + 0],indices.idx[pixel.x + 1],indices.idx[pixel.x + 2]);
+
+
     vec3 pos = vec3(0,0,-1);
     vec3 dir = vec3(0,0,1);
 
     payload.hit = true;
-    data[pixel.x].x = pixel.x*pixel.x;
+//    data[pixel.x].x = pixel.x*pixel.x;
 
     traceRayEXT(
         scene,
@@ -62,8 +86,29 @@ void main() {
         1000,
         0
     );
-    if(payload.hit == false) {
-        data[pixel.x].y = 1;
+
+    // get the vertices
+    vec3 o_base = vertex.vert[5+0].position;
+    vec3 base_1 = vertex.vert[5+1].position - o_base;
+    vec3 base_2 = vertex.vert[5+2].position - o_base;
+    vec3 normal = normalize(cross(base_1, base_2));
+
+    float r = rnd(seed);
+    float s = rnd(seed);
+
+    // mirror points back, if outside of triangle
+    if (r + s >=1) {
+        r = 1-r;
+        s = 1-s;
     }
-    data[pixel.x].z = float(indices.idx[pixel.x+18]);
+
+    vec3 ori = o_base + base_1*s + base_2*r;
+
+//    if(payload.hit == false) {
+//        data[pixel.x].y = 1;
+//    }
+//    data[pixel.x].z = float(indices.idx[pixel.x+18]);
+//    data[pixel.x].w = vertex.vert[pixel.x+18].position.x;
+    oriBuf.ori[pixel.x] = vec4(ori,1);
+    dirBuf.dir[pixel.x] =  vec4(normal,1);
 }

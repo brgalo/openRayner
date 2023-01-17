@@ -43,16 +43,7 @@ Application::Application() {
                                 SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
   loadOrayObjects();
-  raytracer = std::make_unique<Raytracer>(device, *orayObjects);
-  VkCommandBuffer buf = device.beginSingleTimeCommands();
-  raytracer->traceTriangle(buf, 10, 1, false, false, false);
-  device.endSingleTimeCommands(buf);
-  vkDeviceWaitIdle(device.device());
-  std::vector<glm::vec4> output = raytracer->getOutputBuffer();
-
-  int i = 1;
-
-
+  initRaytracer();
 }
 
 Application::~Application() {
@@ -145,7 +136,7 @@ void Application::run() {
       // rendering
       renderer.beginSwapchainRenderPass(commandBuffer);
       renderSystem.renderOrayObjects(frameInfo, *orayObjects);
-      renderSystem.renderLines(frameInfo, lineBuffer, state);
+      renderSystem.renderLines(frameInfo, *raytracer, state);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.renderGui(commandBuffer);
       renderer.endFrame();
@@ -209,13 +200,26 @@ std::unique_ptr<Geometry> createCubeModel(Device &device, glm::vec3 offset) {
 
 void Application::loadOrayObjects() {
   std::shared_ptr<Geometry> geometry =
-      Geometry::createModelFromFile(device, "models/cube.obj");
+      Geometry::createModelFromFile(device, "models/cube_small.obj");
 
   auto orayObj = OrayObject::createOrayObject();
   orayObj.geom = geometry;
   orayObj.transform.translation = {.0f, .0f, 2.5f};
   orayObj.transform.scale = {3.f, 3.f, 3.f};
   orayObjects->push_back(std::move(orayObj));
+}
+
+void Application::initRaytracer() {
+  raytracer = std::make_unique<Raytracer>(device, *orayObjects);
+  VkCommandBuffer buf = device.beginSingleTimeCommands();
+  raytracer->traceTriangle(buf, raytracer->nRays, 1, false, false, false);
+  device.endSingleTimeCommands(buf);
+  vkDeviceWaitIdle(device.device());
+
+  std::vector<glm::vec4> output = raytracer->readOutputBuffer();
+  std::vector<glm::vec4> oris = raytracer->readOriBuffer();
+  std::vector<glm::vec4> dirs = raytracer->readDirBuffer();
+
 }
 
 } // namespace oray

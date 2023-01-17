@@ -3,6 +3,7 @@
 #include "descriptors.hpp"
 #include "device.hpp"
 #include "functions.hpp"
+#include "glm/glm.hpp"
 #include "orayobject.hpp"
 
 #include "commonStructs.h"
@@ -11,7 +12,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace oray {
 class Raytracer {
@@ -21,9 +21,21 @@ public:
   void traceTriangle(VkCommandBuffer cmdBuf, uint64_t nRays,
                      uint64_t triangleIdx, bool recOri, bool recDir,
                      bool recHit);
-  std::vector<glm::vec4> getOutputBuffer();
+  std::vector<glm::vec4> readOutputBuffer() {
+    return returnBuffer(*outputBuffer);
+  };
+  std::vector<glm::vec4> readDirBuffer() {
+    return returnBuffer(*dirBuffer);
+  };
+  std::vector<glm::vec4> readOriBuffer() { return returnBuffer(*oriBuffer); };
+  Buffer &getOriBuffer() { return *oriBuffer; };
 
+  RtPushConstants* pushConsts() {return &pushConstants;};
+
+  uint32_t nRays = 50;
+  
 private:
+  const uint32_t nTrinagles;
   Device &device;
   VulkanFunctions f = VulkanFunctions(device.device());
   // std::shared_ptr<const std::vector<OrayObject>> orayObjects;
@@ -34,12 +46,14 @@ private:
   std::unique_ptr<Buffer> sbtBuffer;
 
   std::unique_ptr<Buffer> outputBuffer;
+  std::unique_ptr<Buffer> oriBuffer;
+  std::unique_ptr<Buffer> dirBuffer;
 
   std::unique_ptr<Buffer> instanceBuffer;
 
   std::unique_ptr<DescriptorSetLayout> rtDescriptorSetLayout;
   std::unique_ptr<DescriptorPool> rtDescriptorPool;
-  
+
   RtPushConstants pushConstants;
 
   VkShaderModule rayGenShader;
@@ -71,6 +85,8 @@ private:
 
   VkAccelerationStructureInstanceKHR instance{};
   uint32_t alignUp(uint32_t val, uint32_t align);
+
+  std::vector<glm::vec4> returnBuffer(Buffer &buffer);
 };
 
 } // namespace oray

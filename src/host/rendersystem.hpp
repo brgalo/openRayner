@@ -6,6 +6,7 @@
 #include "geometry.hpp"
 #include "orayobject.hpp"
 #include "pipeline.hpp"
+#include "raytracing.hpp"
 #include "state.hpp"
 
 #include <memory>
@@ -25,7 +26,7 @@ public:
 
   void renderOrayObjects(FrameInfo &frameInfo,
                          std::vector<OrayObject> &orayObjects);
-  void renderLines(FrameInfo &frameInfo, Buffer &lines, State &state);
+  void renderLines(FrameInfo &frameInfo, Raytracer &rt, State &state);
 
 private:
   void createPipelineLayout(VkDescriptorSetLayout globalSetLayout,

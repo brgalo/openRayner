@@ -47,6 +47,7 @@ Geometry::createModelFromFile(Device &device, const std::string &filePath) {
 
 void Geometry::createVertexBuffers(
     const std::vector<TriangleVertex> &vertices) {
+
   vertexCount = static_cast<uint32_t>(vertices.size());
   assert(vertexCount >= 3 && "Vertex count must be at least 3");
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
@@ -143,10 +144,10 @@ Geometry::getBindingDescriptionsTriangle() {
 }
 
 vector<VkVertexInputBindingDescription> Geometry::getBindingDescriptionsLine() {
-  std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
-  bindingDescriptions[0].binding = 0;
-  bindingDescriptions[0].stride = sizeof(LineVertex);
-  bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+  std::vector<VkVertexInputBindingDescription> bindingDescriptions(0);
+  //bindingDescriptions[0].binding = 0;
+  //bindingDescriptions[0].stride = sizeof(LineVertex);
+  //bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
   return bindingDescriptions;
 }
 
@@ -169,10 +170,10 @@ std::vector<VkVertexInputAttributeDescription>
 Geometry::getAttributeDescriptionsLine() {
   std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
-  attributeDescriptions.push_back(
-      {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, position)});
-  attributeDescriptions.push_back(
-      {1, 0, VK_FORMAT_R32_SFLOAT, offsetof(LineVertex, distFromStart)});
+  //attributeDescriptions.push_back(
+  //    {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(LineVertex, position)});
+  //attributeDescriptions.push_back(
+  //    {1, 0, VK_FORMAT_R32_SFLOAT, offsetof(LineVertex, distFromStart)});
   return attributeDescriptions;
 }
 

@@ -113,7 +113,7 @@ void Buffer::writeToBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
   }
 }
 
-void Buffer::readFromBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) {
+void Buffer::readFromBuffer(void *data, VkDeviceSize size, VkDeviceSize offset) const {
   if (size == VK_WHOLE_SIZE) {
     memcpy(data, mapped, bufferSize);
   } else {

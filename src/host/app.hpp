@@ -29,6 +29,7 @@ public:
 
 private:
   void loadOrayObjects();
+  void initRaytracer();
   State state;
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};

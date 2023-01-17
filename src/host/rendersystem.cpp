@@ -1,5 +1,7 @@
 #include "rendersystem.hpp"
 #include "glm/fwd.hpp"
+#include "orayobject.hpp"
+#include "raytracing.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -87,7 +89,8 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout,
   if (WITH_CONSTANTS) {
     pipelineLayoutInfo.pushConstantRangeCount = 1;
   } else {
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pushConstantRange.size = sizeof(RtPushConstants);
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
   }
 
   pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
@@ -137,19 +140,17 @@ void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
   }
 }
 
-void RenderSystem::renderLines(FrameInfo &frameInfo, Buffer &lines,
+void RenderSystem::renderLines(FrameInfo &frameInfo, Raytracer &rt,
                                State &state) {
   linePipeline->bind(frameInfo.commandBuffer);
   vkCmdSetLineWidth(frameInfo.commandBuffer, state.lineWidth);
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
                           0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
-
-  std::vector<VkBuffer> buffers = {lines.getBuffer()};
-  VkDeviceSize offsets[] = {0};
-  vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, buffers.data(),
-                         offsets);
-  vkCmdDraw(frameInfo.commandBuffer, 4, 1, 0, 0);
+  vkCmdPushConstants(frameInfo.commandBuffer, linePipelineLayout,
+                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                     0, sizeof(RtPushConstants), rt.pushConsts());
+  vkCmdDraw(frameInfo.commandBuffer, rt.nRays * 2, 1, 0, 0);
 }
 
 } // namespace oray
