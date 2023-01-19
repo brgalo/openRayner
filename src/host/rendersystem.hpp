@@ -26,7 +26,7 @@ public:
 
   void renderOrayObjects(FrameInfo &frameInfo,
                          std::vector<OrayObject> &orayObjects);
-  void renderLines(FrameInfo &frameInfo, Raytracer &rt, State &state);
+  void renderLines(FrameInfo &frameInfo, Raytracer &rt);
 
 private:
   void createPipelineLayout(VkDescriptorSetLayout globalSetLayout,

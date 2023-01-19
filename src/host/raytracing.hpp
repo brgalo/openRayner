@@ -7,6 +7,7 @@
 #include "orayobject.hpp"
 
 #include "commonStructs.h"
+#include "state.hpp"
 
 #include <array>
 #include <cstdint>
@@ -14,13 +15,12 @@
 #include <vector>
 
 namespace oray {
+class State;
 class Raytracer {
 public:
-  Raytracer(Device &device, std::vector<OrayObject> const &orayObjects);
+  Raytracer(Device &device, std::vector<OrayObject> const &orayObjects, std::shared_ptr<State> state);
   ~Raytracer();
-  void traceTriangle(VkCommandBuffer cmdBuf, uint64_t nRays,
-                     uint64_t triangleIdx, bool recOri, bool recDir,
-                     bool recHit);
+  void traceTriangle(VkCommandBuffer cmdBuf);
   std::vector<glm::vec4> readOutputBuffer() {
     return returnBuffer(*outputBuffer);
   };
@@ -31,8 +31,7 @@ public:
   Buffer &getOriBuffer() { return *oriBuffer; };
 
   RtPushConstants* pushConsts() {return &pushConstants;};
-
-  uint32_t nRays = 50;
+  std::shared_ptr<State> state;
   
 private:
   const uint32_t nTrinagles;
@@ -81,6 +80,7 @@ private:
   void createRtPipeline();
   void createShaderBindingTable();
   void initPushConstants(std::vector<OrayObject> const &orayObjects);
+  void resizeBuffers();
   VkShaderModule createShaderModule(const std::string &filepath);
 
   VkAccelerationStructureInstanceKHR instance{};

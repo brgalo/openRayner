@@ -15,7 +15,7 @@ struct Constants {
   uint64_t oriBufferAddress;
   uint64_t dirBufferAddress;
 //  uint64_t hitBuffer;
-//  uint64_t triangleIndex;
+  uint64_t triangleIndex;
 //  uint64_t nRays;
 //  bool recordOri;
 //  bool recordDir;
@@ -88,9 +88,9 @@ void main() {
     );
 
     // get the vertices
-    vec3 o_base = vertex.vert[5+0].position;
-    vec3 base_1 = vertex.vert[5+1].position - o_base;
-    vec3 base_2 = vertex.vert[5+2].position - o_base;
+    vec3 o_base = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 0]].position;
+    vec3 base_1 = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 1]].position - o_base;
+    vec3 base_2 = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 2]].position - o_base;
     vec3 normal = normalize(cross(base_1, base_2));
 
     float r = rnd(seed);
@@ -110,5 +110,5 @@ void main() {
 //    data[pixel.x].z = float(indices.idx[pixel.x+18]);
 //    data[pixel.x].w = vertex.vert[pixel.x+18].position.x;
     oriBuf.ori[pixel.x] = vec4(ori,1);
-    dirBuf.dir[pixel.x] =  vec4(normal,1);
+    dirBuf.dir[pixel.x] =  vec4(ori+normal/2,1);
 }

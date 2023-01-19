@@ -8,7 +8,7 @@ struct RtPushConstants {
   uint64_t oriBuffer;
   uint64_t dirBuffer;
 //  uint64_t hitBuffer;
-//  uint64_t triangleIndex;
+  uint64_t triangleIndex;
 //  uint64_t nRays;
 //  bool recordOri;
 //  bool recordDir;

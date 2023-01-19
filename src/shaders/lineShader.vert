@@ -10,7 +10,7 @@ struct Constants {
   uint64_t oriBufferAddress;
   uint64_t dirBufferAddress;
 //  uint64_t hitBuffer;
-//  uint64_t triangleIndex;
+  uint64_t triangleIndex;
 //  uint64_t nRays;
 //  bool recordOri;
 //  bool recordDir;
@@ -36,7 +36,7 @@ void main() {
 
     gl_Position = ubo.projectionViewMatrix * vec4(vert.v[gl_VertexIndex/2].xyz, 1.0);
     if( (gl_VertexIndex % 2) == 0) {
-        gl_Position +=  ubo.projectionViewMatrix * vec4(dir.d[gl_VertexIndex/2].xyz,1.0);
+        gl_Position =  ubo.projectionViewMatrix * vec4(dir.d[gl_VertexIndex/2].xyz,1.0);
     }
     
     fragColor = vec3(0.5, 1, 0.5);

@@ -5,12 +5,13 @@
 #include "swapchain.hpp"
 
 #include "device.hpp"
+#include <memory>
 #include <vector>
 
 namespace oray {
 class Gui {
 public:
-  Gui(Device &device, GLFWwindow *window, SwapChain *swapchain, State &state);
+  Gui(Device &device, GLFWwindow *window, SwapChain *swapchain, std::shared_ptr<State> state);
   ~Gui();
   VkRenderPass getRenderPass() { return renderPass; };
   void recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
@@ -29,7 +30,7 @@ private:
   void destroyFramebuffers();
   VkRenderPass renderPass;
   Device &device;
-  State &state;
+  std::shared_ptr<State> state;
   VkDescriptorPool descriptorPool;
   std::vector<VkFramebuffer> frameBuffers;
   GLFWwindow *window;

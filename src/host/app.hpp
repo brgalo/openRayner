@@ -30,7 +30,7 @@ public:
 private:
   void loadOrayObjects();
   void initRaytracer();
-  State state;
+  std::shared_ptr<State> state = std::make_shared<State>();
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
   Renderer renderer{window, device, state};

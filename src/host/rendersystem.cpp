@@ -140,17 +140,16 @@ void RenderSystem::renderOrayObjects(FrameInfo &frameInfo,
   }
 }
 
-void RenderSystem::renderLines(FrameInfo &frameInfo, Raytracer &rt,
-                               State &state) {
+void RenderSystem::renderLines(FrameInfo &frameInfo, Raytracer &rt) {
   linePipeline->bind(frameInfo.commandBuffer);
-  vkCmdSetLineWidth(frameInfo.commandBuffer, state.lineWidth);
+  vkCmdSetLineWidth(frameInfo.commandBuffer, rt.state->lineWidth);
   vkCmdBindDescriptorSets(frameInfo.commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, linePipelineLayout,
                           0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
   vkCmdPushConstants(frameInfo.commandBuffer, linePipelineLayout,
                      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                      0, sizeof(RtPushConstants), rt.pushConsts());
-  vkCmdDraw(frameInfo.commandBuffer, rt.nRays * 2, 1, 0, 0);
+  vkCmdDraw(frameInfo.commandBuffer, rt.state->nBufferElements * 2, 1, 0, 0);
 }
 
 } // namespace oray

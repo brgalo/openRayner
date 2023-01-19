@@ -13,6 +13,7 @@
 #include "pipeline.hpp"
 #include "raytracing.hpp"
 #include "rendersystem.hpp"
+#include "state.hpp"
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -22,7 +23,6 @@
 #include <glm/gtc/constants.hpp>
 
 #include <array>
-#include <cassert>
 #include <chrono>
 #include <memory>
 #include <stdexcept>
@@ -43,6 +43,7 @@ Application::Application() {
                                 SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
   loadOrayObjects();
+  state->setTriangleNames(orayObjects->data());
   initRaytracer();
 }
 
@@ -123,7 +124,16 @@ void Application::run() {
     //  camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
     camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1, 10);
 
+
+
     if (auto commandBuffer = renderer.beginFrame()) {
+
+       if (state->doTrace && state->nRays != 0) {
+      raytracer->traceTriangle(commandBuffer);
+      state->doTrace = false;
+      }
+
+
       int frameIndex = renderer.getFrameIndex();
       FrameInfo frameInfo{frameIndex, frameTime, commandBuffer, camera,
                           globalDescriptorSets[frameIndex]};
@@ -136,7 +146,7 @@ void Application::run() {
       // rendering
       renderer.beginSwapchainRenderPass(commandBuffer);
       renderSystem.renderOrayObjects(frameInfo, *orayObjects);
-      renderSystem.renderLines(frameInfo, *raytracer, state);
+      if(state->nRays != 0) renderSystem.renderLines(frameInfo, *raytracer);
       renderer.endSwapchainRenderPass(commandBuffer);
       renderer.renderGui(commandBuffer);
       renderer.endFrame();
@@ -200,26 +210,21 @@ std::unique_ptr<Geometry> createCubeModel(Device &device, glm::vec3 offset) {
 
 void Application::loadOrayObjects() {
   std::shared_ptr<Geometry> geometry =
-      Geometry::createModelFromFile(device, "models/cube_small.obj");
+      Geometry::createModelFromFile(device, "models/flat_vase.obj");
 
   auto orayObj = OrayObject::createOrayObject();
   orayObj.geom = geometry;
-  orayObj.transform.translation = {.0f, .0f, 2.5f};
-  orayObj.transform.scale = {3.f, 3.f, 3.f};
+  orayObj.transform.translation = {.0f, .0f, .0f};
+  orayObj.transform.scale = {1.f, 1.f, 1.f};
   orayObjects->push_back(std::move(orayObj));
 }
 
 void Application::initRaytracer() {
-  raytracer = std::make_unique<Raytracer>(device, *orayObjects);
+  raytracer = std::make_unique<Raytracer>(device, *orayObjects, state);
   VkCommandBuffer buf = device.beginSingleTimeCommands();
-  raytracer->traceTriangle(buf, raytracer->nRays, 1, false, false, false);
+  raytracer->traceTriangle(buf);
   device.endSingleTimeCommands(buf);
   vkDeviceWaitIdle(device.device());
-
-  std::vector<glm::vec4> output = raytracer->readOutputBuffer();
-  std::vector<glm::vec4> oris = raytracer->readOriBuffer();
-  std::vector<glm::vec4> dirs = raytracer->readDirBuffer();
-
 }
 
 } // namespace oray

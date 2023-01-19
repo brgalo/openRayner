@@ -13,8 +13,8 @@
 
 namespace oray {
 
-Renderer::Renderer(Window &win, Device &dev, State &state)
-    : window{win}, device{dev}, state{state} {
+Renderer::Renderer(Window &win, Device &dev, std::shared_ptr<State> state)
+    : window{win}, device{dev} {
   recreateSwapchain();
   createCommandBuffers();
   gui = std::make_unique<Gui>(device, window.getGLFWwindow(), swapchain.get(),
