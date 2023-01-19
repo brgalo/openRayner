@@ -210,7 +210,7 @@ std::unique_ptr<Geometry> createCubeModel(Device &device, glm::vec3 offset) {
 
 void Application::loadOrayObjects() {
   std::shared_ptr<Geometry> geometry =
-      Geometry::createModelFromFile(device, "models/flat_vase.obj");
+      Geometry::createModelFromFile(device, "models/two_plates.obj");
 
   auto orayObj = OrayObject::createOrayObject();
   orayObj.geom = geometry;

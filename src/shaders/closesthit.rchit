@@ -1,8 +1,14 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
+
+struct RayPayload {
+    bool hit;
+    float energy;
+};
+
+layout(location = 0) rayPayloadInEXT RayPayload payload;
 
 void main() {
-    hitValue.x = -1;
+    payload.hit = true;
 }

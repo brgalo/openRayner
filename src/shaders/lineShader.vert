@@ -38,6 +38,10 @@ void main() {
     if( (gl_VertexIndex % 2) == 0) {
         gl_Position =  ubo.projectionViewMatrix * vec4(dir.d[gl_VertexIndex/2].xyz,1.0);
     }
-    
-    fragColor = vec3(0.5, 1, 0.5);
+    if(bool(vert.v[gl_VertexIndex/2].q) == true) {
+      fragColor = vec3(0.5, 1, 0.5);
+    } else {
+      fragColor = vec3(1.0, 1, 0.0);
+    }
+
 }

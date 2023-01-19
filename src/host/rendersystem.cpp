@@ -51,6 +51,7 @@ RenderSystem::RenderSystem(Device &device, VkRenderPass triRenderPass,
   pipelineConfig.dynamicStateInfo.pDynamicStates =
       pipelineConfig.dynamicStateEnables.data();
   pipelineConfig.rasterizationInfo.lineWidth = 1.f;
+  
   createPipeline(lineRenderPass, linePipeline, linePipelineLayout,
                  pipelineConfig, Geometry::getBindingDescriptionsLine(),
                  Geometry::getAttributeDescriptionsLine(),

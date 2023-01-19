@@ -64,35 +64,14 @@ void main() {
     uvec2 pixel = gl_LaunchIDEXT.xy;
     uint seed = tea(pixel.x, pixel.y);
 
-//    uvec3 myIdx = uvec3(indices.idx[pixel.x + 0],indices.idx[pixel.x + 1],indices.idx[pixel.x + 2]);
-
-
-    vec3 pos = vec3(0,0,-1);
-    vec3 dir = vec3(0,0,1);
-
-    payload.hit = true;
-//    data[pixel.x].x = pixel.x*pixel.x;
-
-    traceRayEXT(
-        scene,
-        gl_RayFlagsOpaqueEXT,
-        0xFF,
-        0,
-        0,
-        0,
-        pos,
-        0.0,
-        dir,
-        1000,
-        0
-    );
-
     // get the vertices
     vec3 o_base = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 0]].position;
     vec3 base_1 = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 1]].position - o_base;
     vec3 base_2 = vertex.vert[indices.idx[uint(consts.triangleIndex) * 3 + 2]].position - o_base;
     vec3 normal = normalize(cross(base_1, base_2));
+    vec3 base_star = normalize(cross(base_1, normal));
 
+    // random vals for random point sampling
     float r = rnd(seed);
     float s = rnd(seed);
 
@@ -101,14 +80,32 @@ void main() {
         r = 1-r;
         s = 1-s;
     }
+    vec3 ori = o_base + base_1*r + base_2*s;
 
-    vec3 ori = o_base + base_1*s + base_2*r;
+    // random vals for random dir sampling
+    float phi =  acos(2*rnd(seed)-1);
+    float teta = rnd(seed)*radians(360);
+    vec3 dir = cos(phi)*(sin(teta)*base_star+
+                     cos(teta)*normalize(base_1))+sin(phi)*normal;
 
-//    if(payload.hit == false) {
-//        data[pixel.x].y = 1;
-//    }
-//    data[pixel.x].z = float(indices.idx[pixel.x+18]);
-//    data[pixel.x].w = vertex.vert[pixel.x+18].position.x;
-    oriBuf.ori[pixel.x] = vec4(ori,1);
-    dirBuf.dir[pixel.x] =  vec4(ori+normal/2,1);
+    payload.hit = false;
+
+    traceRayEXT(
+        scene,
+        gl_RayFlagsOpaqueEXT,
+        0xFF,
+        0,
+        0,
+        0,
+        ori+0.001*normal,
+        0.0,
+        dir,
+        1000,
+        0
+    );
+
+
+
+    oriBuf.ori[pixel.x] = vec4(ori,payload.hit);
+    if(pixel.x % 1 == 0) dirBuf.dir[pixel.x] =  vec4(dir+ori,payload.hit);
 }

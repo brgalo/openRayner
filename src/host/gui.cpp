@@ -42,7 +42,7 @@ void Gui::recordImGuiCommands(VkCommandBuffer buffer, uint32_t imgIdx,
   ImGui::SliderFloat("Line Width", &state->lineWidth, 0.2f, 10.f);
   state->doTrace |= ImGui::SliderInt("nRays", &state->nRays, 0, 5000);
 
-  ImGui::Combo("select triangle:", &state->currTri, &State::itemGetter,
+  state->doTrace |= ImGui::Combo("select triangle:", &state->currTri, &State::itemGetter,
                state->triNames.data(), state->triNames.size());
 
   state->doTrace |= ImGui::Button("go");
