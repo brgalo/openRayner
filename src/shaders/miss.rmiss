@@ -1,13 +1,12 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-struct RayPayload {
-    bool hit;
-    float energy;
-};
+#include "common.glsl"
 
 layout(location = 0) rayPayloadInEXT RayPayload payload;
 
 void main() {
-    payload.hit = false;
+    payload.uv = vec2(0.5,.5);
+    payload.hitIdx = -1;
+    payload.energy = 0;
 }

@@ -1,5 +1,4 @@
 #include "descriptors.hpp"
-#include "bindings.h"
 
 // std
 #include <cassert>
@@ -143,7 +142,7 @@ DescriptorWriter::DescriptorWriter(DescriptorSetLayout &setLayout,
 
 bool DescriptorWriter::writeandBuildTLAS(uint32_t binding,
                                     VkAccelerationStructureKHR *pTLAS,
-                                    VkDescriptorSet &descriptorSet, VkDescriptorBufferInfo *bufferInfo) {
+                                    VkDescriptorSet &descriptorSet) {
   assert(setLayout.bindings.count(binding) == 1 &&
          "Layout does not contain TLAS binding!");
   VkWriteDescriptorSetAccelerationStructureKHR
@@ -161,16 +160,6 @@ bool DescriptorWriter::writeandBuildTLAS(uint32_t binding,
   tlasWrite.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 
   writes.push_back(tlasWrite);
-
-  
-  VkWriteDescriptorSet outputWrite{};
-  outputWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  outputWrite.dstSet = 0;
-  outputWrite.dstBinding = 1;
-  outputWrite.descriptorCount = 1;
-  outputWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  outputWrite.pBufferInfo = bufferInfo;
-  writes.push_back(outputWrite);
 
   return this->build(descriptorSet);
 }

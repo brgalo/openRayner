@@ -148,11 +148,14 @@ void Device::createLogicalDevice() {
     queueCreateInfos.push_back(queueCreateInfo);
   }
 
+
   // create raytracing pNext chain
   VkPhysicalDeviceFeatures2 features2{
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
   features2.features.wideLines = VK_TRUE;
   features2.features.samplerAnisotropy = VK_TRUE;
+  features2.features.shaderInt64 = VK_TRUE;
+  features2.pNext = nullptr;
   /*
     VkPhysicalDeviceFeatures deviceFeatures = {};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -202,7 +205,8 @@ void Device::createLogicalDevice() {
     createInfo.enabledLayerCount = 0;
   }
 
-  if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) !=
+  VkResult res = vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_);
+  if (res !=
       VK_SUCCESS) {
     throw std::runtime_error("failed to create logical device!");
   }

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 class State;
@@ -21,6 +22,7 @@ public:
   Raytracer(Device &device, std::vector<OrayObject> const &orayObjects, std::shared_ptr<State> state);
   ~Raytracer();
   void traceTriangle(VkCommandBuffer cmdBuf);
+  void traceInternalVF(VkCommandBuffer cmdBuf);
   std::vector<glm::vec4> readOutputBuffer() {
     return returnBuffer(*outputBuffer);
   };
@@ -47,6 +49,7 @@ private:
   std::unique_ptr<Buffer> outputBuffer;
   std::unique_ptr<Buffer> oriBuffer;
   std::unique_ptr<Buffer> dirBuffer;
+  std::unique_ptr<Buffer> hitBuffer;
 
   std::unique_ptr<Buffer> instanceBuffer;
 
@@ -58,6 +61,7 @@ private:
   VkShaderModule rayGenShader;
   VkShaderModule chShader;
   VkShaderModule missShader;
+  VkShaderModule rayGenShaderVF;
 
   VkPipelineLayout rtPipelineLayout;
   VkPipeline rtPipeline;
@@ -65,6 +69,7 @@ private:
   VkDescriptorSet rtDescriptorSet;
 
   VkStridedDeviceAddressRegionKHR rgenRegion{};
+  VkStridedDeviceAddressRegionKHR rgenRegionVF{};
   VkStridedDeviceAddressRegionKHR hitRegion{};
   VkStridedDeviceAddressRegionKHR missRegion{};
   VkStridedDeviceAddressRegionKHR callRegion{};
@@ -79,7 +84,7 @@ private:
   void createRtPipelineLayout();
   void createRtPipeline();
   void createShaderBindingTable();
-  void initPushConstants(std::vector<OrayObject> const &orayObjects);
+  void initBuffers(std::vector<OrayObject> const &orayObjects);
   void resizeBuffers();
   VkShaderModule createShaderModule(const std::string &filepath);
 

@@ -32,8 +32,7 @@ namespace oray {
 struct GlobalUbo {
   glm::mat4 projectionView{1.f};
   glm::vec4 ambientLightColor{1.f, 1.f, 1.f, 0.2f};
-  glm::vec3 lightPosition{-1.f};
-  alignas(16) glm::vec4 lightColor{1.f};
+  uint64_t colorBufferAddress;
 };
 
 Application::Application() {
@@ -45,6 +44,11 @@ Application::Application() {
   loadOrayObjects();
   state->setTriangleNames(orayObjects->data());
   initRaytracer();
+
+  VkCommandBuffer cmdBuf = device.beginSingleTimeCommands();
+  raytracer->traceInternalVF(cmdBuf);
+  device.endSingleTimeCommands(cmdBuf);
+  vkDeviceWaitIdle(device.device());
 }
 
 Application::~Application() {
@@ -140,6 +144,7 @@ void Application::run() {
       // update
       GlobalUbo ubo{};
       ubo.projectionView = camera.getProjection() * camera.getView();
+      ubo.colorBufferAddress = raytracer->pushConsts()->hitBuffer;
       uboBuffers[frameIndex]->writeToBuffer(&ubo);
       uboBuffers[frameIndex]->flush();
 

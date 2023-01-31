@@ -13,7 +13,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-#include "bindings.h"
+//#include "bindings.h"
 
 namespace oray {
 
@@ -30,7 +30,7 @@ Raytracer::Raytracer(Device &device, std::vector<OrayObject> const &orayObjects,
   createShaderModules();
   createRtPipelineLayout();
   createRtPipeline();
-  initPushConstants(orayObjects);
+  initBuffers(orayObjects);
 }
 
 Raytracer::~Raytracer() {
@@ -239,21 +239,19 @@ std::unique_ptr<DescriptorSetLayout> Raytracer::createDescriptorSetLayout() {
   return DescriptorSetLayout::Builder(device)
       .addBinding(0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
                   VK_SHADER_STAGE_RAYGEN_BIT_KHR)
-      .addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                  VK_SHADER_STAGE_RAYGEN_BIT_KHR)
       .build();
 }
 
 std::unique_ptr<DescriptorPool> Raytracer::createDescriptorPool() {
   return DescriptorPool::Builder(device)
       .addPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1)
-      .addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
       .setMaxSets(1)
       .build();
 }
 
 void Raytracer::createShaderModules() {
   rayGenShader = createShaderModule("spv/raygen.rgen.spv");
+  rayGenShaderVF = createShaderModule("spv/raygenVF.rgen.spv");
   chShader = createShaderModule("spv/closesthit.rchit.spv");
   missShader = createShaderModule("spv/miss.rmiss.spv");
 }
@@ -296,23 +294,28 @@ void Raytracer::createRtPipelineLayout() {
 
 void Raytracer::createRtPipeline() {
   // TODO: rename shader entry points to correspond to programm!
-  std::array<VkPipelineShaderStageCreateInfo, 3> pssci{};
+  std::array<VkPipelineShaderStageCreateInfo, 4> pssci{};
   pssci[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   pssci[0].module = rayGenShader;
   pssci[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
   pssci[0].pName = "main";
 
   pssci[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  pssci[1].module = chShader;
-  pssci[1].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+  pssci[1].module = rayGenShaderVF;
+  pssci[1].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
   pssci[1].pName = "main";
 
   pssci[2].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  pssci[2].module = missShader;
-  pssci[2].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+  pssci[2].module = chShader;
+  pssci[2].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
   pssci[2].pName = "main";
 
-  std::array<VkRayTracingShaderGroupCreateInfoKHR, 3> rtsgci{};
+  pssci[3].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  pssci[3].module = missShader;
+  pssci[3].stage = VK_SHADER_STAGE_MISS_BIT_KHR;
+  pssci[3].pName = "main";
+
+  std::array<VkRayTracingShaderGroupCreateInfoKHR, 4> rtsgci{};
   rtsgci[0].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
   rtsgci[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
   rtsgci[0].generalShader = 0;
@@ -321,18 +324,25 @@ void Raytracer::createRtPipeline() {
   rtsgci[0].intersectionShader = VK_SHADER_UNUSED_KHR;
 
   rtsgci[1].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-  rtsgci[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
-  rtsgci[1].generalShader = VK_SHADER_UNUSED_KHR;
-  rtsgci[1].closestHitShader = 1;
+  rtsgci[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+  rtsgci[1].generalShader = 1;
+  rtsgci[1].closestHitShader = VK_SHADER_UNUSED_KHR;
   rtsgci[1].anyHitShader = VK_SHADER_UNUSED_KHR;
   rtsgci[1].intersectionShader = VK_SHADER_UNUSED_KHR;
 
   rtsgci[2].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
-  rtsgci[2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-  rtsgci[2].generalShader = 2;
-  rtsgci[2].closestHitShader = VK_SHADER_UNUSED_KHR;
+  rtsgci[2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+  rtsgci[2].generalShader = VK_SHADER_UNUSED_KHR;
+  rtsgci[2].closestHitShader = 2;
   rtsgci[2].anyHitShader = VK_SHADER_UNUSED_KHR;
   rtsgci[2].intersectionShader = VK_SHADER_UNUSED_KHR;
+
+  rtsgci[3].sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+  rtsgci[3].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+  rtsgci[3].generalShader = 3;
+  rtsgci[3].closestHitShader = VK_SHADER_UNUSED_KHR;
+  rtsgci[3].anyHitShader = VK_SHADER_UNUSED_KHR;
+  rtsgci[3].intersectionShader = VK_SHADER_UNUSED_KHR;
 
   VkRayTracingPipelineCreateInfoKHR rtpci{
       VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR};
@@ -360,6 +370,7 @@ void Raytracer::createRtPipeline() {
 
   uint32_t missCount = 1;
   uint32_t hitCount = 1;
+  uint32_t rgCount = 2;
   uint32_t handleCount = static_cast<uint32_t>(rtsgci.size());
   uint32_t handleSize = rtPipelineProps.shaderGroupHandleSize;
   uint32_t handleSizeAligned =
@@ -368,6 +379,10 @@ void Raytracer::createRtPipeline() {
   rgenRegion.stride =
       alignUp(handleSizeAligned, rtPipelineProps.shaderGroupBaseAlignment);
   rgenRegion.size = rgenRegion.stride;
+
+  // copy second rgShader
+  rgenRegionVF = rgenRegion;
+
   missRegion.stride = handleSizeAligned;
   missRegion.size = alignUp(missCount * handleSizeAligned,
                             rtPipelineProps.shaderGroupBaseAlignment);
@@ -392,18 +407,19 @@ void Raytracer::createRtPipeline() {
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   VkDeviceAddress sbtAdress = sbtBuffer->getAddress();
-  rgenRegion.deviceAddress = sbtAdress;
-  hitRegion.deviceAddress = sbtAdress + rgenRegion.size;
-  missRegion.deviceAddress = sbtAdress + rgenRegion.size + hitRegion.size;
+  rgenRegion.deviceAddress   = sbtAdress;
+  rgenRegionVF.deviceAddress = sbtAdress + rgenRegion.size;
+  hitRegion.deviceAddress    = sbtAdress + rgenRegion.size + rgenRegionVF.size;
+  missRegion.deviceAddress   = sbtAdress + rgenRegion.size + rgenRegionVF.size + hitRegion.size;
 
   std::vector<uint8_t> sbtDataHost(sbtSize);
   uint32_t handleIdx = 0;
   uint8_t *pData = sbtDataHost.data();
-
   auto getHandle = [&](int i) { return handles.data() + i * handleSize; };
 
   // raygen
   memcpy(pData, getHandle(handleIdx++), handleSize);
+  memcpy(pData+rgenRegion.stride, getHandle(handleIdx++), handleSize);
 
   // chit
   pData = sbtDataHost.data() + rgenRegion.size;
@@ -416,25 +432,31 @@ void Raytracer::createRtPipeline() {
   pData = sbtDataHost.data() + rgenRegion.size + hitRegion.size;
   for (uint32_t c = 0; c < missCount; ++c) {
     memcpy(pData, getHandle(handleIdx++), handleSize);
+    pData += missRegion.stride;
   }
+
   sbtBuffer->map();
   sbtBuffer->writeToBuffer(sbtDataHost.data());
   sbtBuffer->unmap();
 }
 
-void Raytracer::initPushConstants(std::vector<OrayObject> const &orayObjects) {
-  outputBuffer = std::make_unique<Buffer>(
-      device, sizeof(glm::vec4) * 10, 1, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+void Raytracer::initBuffers(std::vector<OrayObject> const &orayObjects) {
 
-  VkDescriptorBufferInfo bufferInfo = outputBuffer->descriptorInfo();
   DescriptorWriter(*rtDescriptorSetLayout, *rtDescriptorPool)
-      .writeandBuildTLAS(0, &tlas, rtDescriptorSet, &bufferInfo);
+      .writeandBuildTLAS(0, &tlas, rtDescriptorSet);
   pushConstants.indexBuffer = orayObjects[0].geom->getIndexBufferAddress();
   pushConstants.vertexBuffer = orayObjects[0].geom->getVertexBufferAddress();
 
   resizeBuffers();
+
+  // create hitbuffer
+  hitBuffer = std::make_unique<Buffer>(
+      device, sizeof(float) * (state->triNames.size() + 1) * state->triNames.size(), 1,
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  pushConstants.hitBuffer = hitBuffer->getAddress();
 }
 
 void Raytracer::resizeBuffers() {
@@ -442,7 +464,7 @@ void Raytracer::resizeBuffers() {
 
   oriBuffer =
       std::make_unique<Buffer>(device, sizeof(glm::vec4), state->nBufferElements,
-                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -476,6 +498,20 @@ void Raytracer::traceTriangle(VkCommandBuffer cmdBuf) {
                      &pushConstants);
   f.vkCmdTraceRaysKHR(cmdBuf, &rgenRegion, &missRegion, &hitRegion, &callRegion,
                       state->nBufferElements, 1, 1);
+}
+
+void Raytracer::traceInternalVF(VkCommandBuffer cmdBuf) {
+  vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, rtPipeline);
+  vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                          rtPipelineLayout, 0, 1, &rtDescriptorSet, 0,
+                          VK_NULL_HANDLE);
+  pushConstants.triangleIndex = 1000; // nRays
+  vkCmdPushConstants(cmdBuf, rtPipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                     0, static_cast<uint32_t>(sizeof(pushConstants)),
+                     &pushConstants);
+  f.vkCmdTraceRaysKHR(cmdBuf, &rgenRegionVF, &missRegion,
+                    &hitRegion, &callRegion, pushConstants.nTriangles, 1, 1);
+  
 }
 
 } // namespace oray

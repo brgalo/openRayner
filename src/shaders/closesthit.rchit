@@ -1,14 +1,15 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-
-struct RayPayload {
-    bool hit;
-    float energy;
-};
+#include "common.glsl"
 
 layout(location = 0) rayPayloadInEXT RayPayload payload;
 
+
+hitAttributeEXT vec2 baryCoord;
+
 void main() {
-    payload.hit = true;
+    payload.uv = baryCoord;
+    payload.hitIdx = gl_PrimitiveID;
+    payload.energy = 1;
 }

@@ -5,6 +5,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace oray {
 
@@ -112,7 +113,9 @@ private:
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
       VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
       VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-      VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME};
+      VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+      VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME,
+      VK_EXT_SHADER_ATOMIC_FLOAT_2_EXTENSION_NAME};
 };
 
 } // namespace oray
