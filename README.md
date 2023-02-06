@@ -1,8 +1,8 @@
 # openRayner
-a wip thermal raytracer
+a wip thermal raytracer currently capable of sampling rays from triangles in the scene and visualizing them interactively in a glfw window
 
-## dependencies
-a vulkan driver, NVDIAS nouveau doesnt work properly, apperently :/
+## dependencies for building and running
+a vulkan driver, Nvidias nouveau doesnt work properly, apperently :/
 
 ### Ubuntu
 
@@ -16,7 +16,7 @@ a vulkan driver, NVDIAS nouveau doesnt work properly, apperently :/
     sudo apt-get install xorg-dev libglu1-mesa-dev
 
 
-Arch:
+### Arch:
 
     // Vulkan
     sudo pacman -S vulkan-devel
@@ -24,6 +24,7 @@ Arch:
     // GLFW
     sudo pacman -S glfw-wayland # glfw-x11 for X11 users
 
-
+## screenshots
+![image](doc/pictures/raysFromTriangle.png)
 
 

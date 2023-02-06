@@ -10,9 +10,15 @@ struct Constants {
   uint64_t hitBufferAddress;
   uint64_t triangleIndex;
   uint64_t nTriangles;
-//  bool recordOri;
+  uint64_t tri2MeshIdxBuffer;
 //  bool recordDir;
 //  bool recordHit;
+};
+
+// x = nTriInMesh
+// y = nTriWithCurrMesh 
+struct TriangleToMeshIdx {
+  vec4 data;
 };
 
 struct RayPayload {
@@ -26,4 +32,13 @@ struct Vertex {
     vec3 color;
     vec3 normal;
     vec2 uv;
+};
+
+struct ComputeConsts {
+    uint64_t inBuffer;
+    uint64_t outBuffer;
+    uint64_t nTriangleToMeshIdxBuffer;
+    uint64_t nMeshes;
+    uint64_t nTriangles;
+    uint64_t launchSize;
 };

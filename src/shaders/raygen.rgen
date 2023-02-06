@@ -23,10 +23,8 @@ void main() {
     Vertices vertex = Vertices(consts.vertexBufferAddress);
     oriBuffer oriBuf = oriBuffer(consts.oriBufferAddress);
     dirBuffer dirBuf = dirBuffer(consts.dirBufferAddress);
-    hitBuffer hitBuf = hitBuffer(consts.hitBufferAddress);
     
     uvec2 pixel = gl_LaunchIDEXT.xy;
-    uint rowOffset = pixel.x * uint((consts.nTriangles + 1));
     uint seed = tea(pixel.x, pixel.y);
 
     // get the vertices
@@ -48,10 +46,11 @@ void main() {
     vec3 ori = o_base + base_1*r + base_2*s;
 
     // random vals for random dir sampling
-    float phi =  acos(2*rnd(seed)-1);
+    float rayEnergy = rnd(seed);
+    float phi =  acos(rayEnergy);
     float teta = rnd(seed)*radians(360);
-    vec3 dir = cos(phi)*(sin(teta)*base_star+
-                     cos(teta)*normalize(base_1))+sin(phi)*normal;
+    vec3 dir = sin(phi)*(sin(teta)*base_star+
+                     cos(teta)*normalize(base_1))+cos(phi)*normal;
 
     traceRayEXT(
         scene,
@@ -70,9 +69,9 @@ void main() {
     vec3 hitPoint;
     if(payload.hitIdx>=0) {
         hitPoint  =   (1-payload.uv.x-payload.uv.y)*(vertex.vert[indices.idx[payload.hitIdx*3 + 0]].position) + 
-                      payload.uv.x*(vertex.vert[indices.idx[payload.hitIdx*3 + 1]].position) +
-                      payload.uv.y*(vertex.vert[indices.idx[payload.hitIdx*3 + 2]].position);
-    } else {
+                                       payload.uv.x*(vertex.vert[indices.idx[payload.hitIdx*3 + 1]].position) +
+                                       payload.uv.y*(vertex.vert[indices.idx[payload.hitIdx*3 + 2]].position);
+    } else {      
         hitPoint = ori+0.2*dir;
     }
     

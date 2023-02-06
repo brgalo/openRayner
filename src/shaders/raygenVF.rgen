@@ -1,10 +1,13 @@
 #version 460
 
 #extension GL_EXT_ray_tracing : require
-#extension GL_EXT_shader_atomic_float : enable
 
 #include "common.glsl"
 #include "random.glsl"
+
+layout(buffer_reference, std430, buffer_reference_align = 4) readonly buffer Indices{uint idx[];};
+layout(buffer_reference, scalar) readonly buffer Vertices{Vertex vert[];};
+layout(buffer_reference, scalar) buffer hitBuffer{float val[];};
 
 layout(push_constant) uniform _Constants { Constants consts;};
 
@@ -13,5 +16,73 @@ layout(location = 0) rayPayloadEXT RayPayload payload;
 layout(set = 0, binding = 0) uniform accelerationStructureEXT scene;
 
 void main() {
-    int i = 1;
+    Indices indices = Indices(consts.indexBufferAddress);
+    Vertices vertex = Vertices(consts.vertexBufferAddress);
+    hitBuffer hitBuf = hitBuffer(consts.hitBufferAddress);
+
+    uvec2 pixel = gl_LaunchIDEXT.xy;
+    uint rowSize = uint(consts.nTriangles + 3);
+    uint rowOffset = pixel.x * rowSize;
+    uint seed = tea(pixel.x, pixel.y);
+
+    // zero out data
+    for(int i = 0; i<rowSize; ++i) {
+        hitBuf.val[rowOffset + i] = 0;
+    }
+
+    // get the vertices
+    vec3 o_base = vertex.vert[indices.idx[uint(pixel.x) * 3 + 0]].position;
+    vec3 base_1 = vertex.vert[indices.idx[uint(pixel.x) * 3 + 1]].position - o_base;
+    vec3 base_2 = vertex.vert[indices.idx[uint(pixel.x) * 3 + 2]].position - o_base;
+
+    // area is length of crossproduct of base vectors
+    vec3 normal = cross(base_1, base_2);
+    hitBuf.val[rowOffset + rowSize - 1] = length(normal);
+    // normalize normal
+    normal = normalize(normal);
+    vec3 base_star = normalize(cross(base_1, normal));
+
+    for(int i = 0; i<consts.triangleIndex; ++i) {
+
+    // random vals for random point sampling
+    float r = rnd(seed);
+    float s = rnd(seed);
+
+    // mirror points back, if outside of triangle
+    if (r + s >=1) {
+        r = 1-r;
+        s = 1-s;
+    }
+    
+    vec3 ori = o_base + base_1*r + base_2*s;
+
+    // random vals for random dir sampling
+    float rayEnergy = rnd(seed);
+    float phi =  acos(rayEnergy);
+    float teta = rnd(seed)*radians(360);
+    vec3 dir = sin(phi)*(sin(teta)*base_star+
+                     cos(teta)*normalize(base_1))+cos(phi)*normal;
+
+    traceRayEXT(
+        scene,
+        gl_RayFlagsOpaqueEXT,
+        0xFF,
+        0,
+        0,
+        0,
+        ori+0.1*normal,
+        0.0,
+        dir,
+        1000,
+        0
+    );
+
+    if(payload.hitIdx == -1) {
+        hitBuf.val[int(rowOffset + consts.nTriangles + 1)] += rayEnergy;
+    } else {
+        hitBuf.val[rowOffset + payload.hitIdx] += rayEnergy;
+    }
+        // access nTri,miss,cumEnergy,area
+        hitBuf.val[rowOffset + rowSize - 2] += rayEnergy;
+    }
 }

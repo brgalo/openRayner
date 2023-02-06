@@ -35,14 +35,16 @@ public:
     }
   };
 
-  struct LineVertex {
-    glm::vec3 position{};
-    float distFromStart{};
+  struct MeshIdx {
+    // .x = nTrianglesInCurrentMesh
+    // .y = cumTrianglesWithCurrentMesh
+    glm::uvec4 data{0};
   };
 
   struct Builder {
     std::vector<TriangleVertex> vertices{};
     std::vector<uint32_t> indices{};
+    std::vector<MeshIdx> triangleToMeshIdx{};
 
     void loadModel(const std::string &filePath);
   };
@@ -63,10 +65,14 @@ public:
 
   VkDeviceAddress getIndexBufferAddress();
   VkDeviceAddress getVertexBufferAddress();
-
+  VkDeviceAddress getTriangleToMeshIdxBufferAddress();
+  const std::vector<MeshIdx> &triToMeshIdx() {
+    return static_cast < const std::vector<MeshIdx>&>(triangleToMeshIdx);
+  };
 private:
   void createVertexBuffers(const std::vector<TriangleVertex> &vertices);
   void createIndexBuffers(const std::vector<uint32_t> &indices);
+  void createMeshIdxBuffer(const std::vector<MeshIdx> &tri2MeshIdx);
 
   Device &device;
   std::unique_ptr<Buffer> vertexBuffer;
@@ -75,5 +81,8 @@ private:
   bool hasIndexBuffer = false;
   std::unique_ptr<Buffer> indexBuffer;
   uint32_t indexCount;
+
+  std::unique_ptr<Buffer> meshIdxBuffer;
+  std::vector<MeshIdx> triangleToMeshIdx{};
 };
 } // namespace oray

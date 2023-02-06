@@ -45,14 +45,14 @@ public:
   void bind(VkCommandBuffer commandBuffer);
 
   static std::vector<char> readFile(const std::string &filepath);
+  static void createShaderModule(Device& device, const std::vector<char> &code,
+                          VkShaderModule *shaderModule);
+
 
 private:
   void createPipeline(const std::string &vertFilepath,
                       const std::string &fragFilepath,
                       const PipelineConfigInfo &configInfo);
-
-  void createShaderModule(const std::vector<char> &code,
-                          VkShaderModule *shaderModule);
 
   Device &device;
 

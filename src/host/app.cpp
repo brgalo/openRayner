@@ -87,21 +87,6 @@ void Application::run() {
   //  camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
   camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
 
-  std::vector<Geometry::LineVertex> lines{
-      {{-2.f, 0.f, 0.f},1.f},
-      {{2.f, 0.f, 0.f}, .75f},
-      {{0.f, -2.f, 0.f},.5f},
-      {{0.f, 2.f, 0.f}, .25f}};
-  uint32_t lineVertsCount = static_cast<uint32_t>(lines.size());
-  VkDeviceSize bufferSize = sizeof(lines[0]) * lineVertsCount;
-  uint32_t lineVertSize = sizeof(lines[0]);
-
-  Buffer lineBuffer(device, lineVertSize, lineVertsCount,
-                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  lineBuffer.map();
-  lineBuffer.writeToBuffer((void *)lines.data());
 
   auto viewerObject = OrayObject::createOrayObject();
   KeyboardController cameraController{};
@@ -232,4 +217,7 @@ void Application::initRaytracer() {
   vkDeviceWaitIdle(device.device());
 }
 
+void Application::initCompute() {
+  compute = std::make_unique<Compute>(device, *orayObjects);
+}
 } // namespace oray

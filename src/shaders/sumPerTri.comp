@@ -1,0 +1,31 @@
+#version 450
+
+#include "common.glsl"
+
+layout (local_size_x = 16) in;
+
+layout(push_constant) uniform _ComputeConsts { ComputeConsts consts;};
+
+layout(buffer_reference, scalar) readonly buffer HitBuffer{float at[];};
+layout(buffer_reference, scalar) buffer VfBuffer{float at[];};
+
+void main() {
+    HitBuffer hitBuffer = HitBuffer(consts.inBuffer);
+    VfBuffer vfBuffer = VfBuffer(consts.outBuffer);
+    uint launchIdx = gl_GlobalInvocationID.x;
+    // diregard luanchIdx outside of the actual data
+    if(launchIdx < consts.launchSize) {
+    uint rowlength = uint(consts.nTriangles + 2);
+    uint fromTriangle = launchIdx / rowlength;
+    uint toTriangle = launchIdx % rowlength;
+    // if not last element in row (the total energy of all cast rays)
+    // one past current will be first in the next and thus have a remainder of zero
+    // when dividing by the rowlength (nTriangles + 2)
+    if((launchIdx + 1) % rowlength != 0) { 
+    // access energy at the last element (rowlength - 1) element
+     float totalEnergy = hitBuffer.at[launchIdx - toTriangle + rowlength - 1];
+    
+    vfBuffer.at[launchIdx] = hitBuffer.at[launchIdx] / totalEnergy;
+    }
+    }
+}

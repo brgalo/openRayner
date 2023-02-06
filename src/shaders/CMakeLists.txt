@@ -11,7 +11,8 @@ file(GLOB GLSL_SOURCE_FILES
     "*.vert"
     "*.rmiss"
     "*.rchit"
-    "*.rgen")
+    "*.rgen"
+    "*.comp")
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
     get_filename_component(FILENAME ${GLSL} NAME)

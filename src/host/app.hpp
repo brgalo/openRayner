@@ -6,6 +6,7 @@
 #include "renderer.hpp"
 #include "window.hpp"
 #include "raytracing.hpp"
+#include "compute.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -30,6 +31,7 @@ public:
 private:
   void loadOrayObjects();
   void initRaytracer();
+  void initCompute();
   std::shared_ptr<State> state = std::make_shared<State>();
   Window window{WIDTH, HEIGHT, "Hello VLKN!"};
   Device device{window};
@@ -40,6 +42,7 @@ private:
       std::make_shared<std::vector<OrayObject>>();
 
   std::unique_ptr<Raytracer> raytracer;
+  std::unique_ptr<Compute> compute;
 };
 
 } // namespace oray

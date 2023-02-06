@@ -10,7 +10,7 @@ struct RtPushConstants {
   uint64_t hitBuffer;
   uint64_t triangleIndex;
   uint64_t nTriangles;
-//  bool recordOri;
+  uint64_t tri2MeshIdxBuffer;
 //  bool recordDir;
 //  bool recordHit;
 };

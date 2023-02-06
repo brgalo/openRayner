@@ -446,12 +446,13 @@ void Raytracer::initBuffers(std::vector<OrayObject> const &orayObjects) {
       .writeandBuildTLAS(0, &tlas, rtDescriptorSet);
   pushConstants.indexBuffer = orayObjects[0].geom->getIndexBufferAddress();
   pushConstants.vertexBuffer = orayObjects[0].geom->getVertexBufferAddress();
+  pushConstants.tri2MeshIdxBuffer = orayObjects[0].geom->getTriangleToMeshIdxBufferAddress();
 
   resizeBuffers();
 
-  // create hitbuffer
+  // create hitbuffer tonTriangles,miss,cumEnergy,area
   hitBuffer = std::make_unique<Buffer>(
-      device, sizeof(float) * (state->triNames.size() + 1) * state->triNames.size(), 1,
+      device, sizeof(float) * (state->triNames.size() + 3) * state->triNames.size(), 1,
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |

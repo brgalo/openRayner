@@ -4,6 +4,8 @@ add_library(renderer app.hpp
                      buffer.cpp
                      camera.hpp
                      camera.cpp
+                     compute.hpp
+                     compute.cpp
                      descriptors.hpp
                      descriptors.cpp
                      device.cpp

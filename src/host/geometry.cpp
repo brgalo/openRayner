@@ -34,6 +34,7 @@ Geometry::Geometry(Device &device, const Geometry::Builder &builder)
     : device(device) {
   createVertexBuffers(builder.vertices);
   createIndexBuffers(builder.indices);
+  createMeshIdxBuffer(builder.triangleToMeshIdx);
 }
 
 Geometry::~Geometry() {}
@@ -107,6 +108,29 @@ void Geometry::createIndexBuffers(const std::vector<uint32_t> &indices) {
                     bufferSize);
 }
 
+void Geometry::createMeshIdxBuffer(const std::vector<MeshIdx> &tri2MeshIdx) {
+  VkDeviceSize bufferSize = sizeof(Geometry::MeshIdx) * tri2MeshIdx.size();
+
+  Buffer stagingBuffer{
+      device,
+      bufferSize,
+      1,
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+  };
+  stagingBuffer.map();
+  stagingBuffer.writeToBuffer((void *)tri2MeshIdx.data());
+
+  meshIdxBuffer = std::make_unique<Buffer>(
+      device, bufferSize, 1,
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  device.copyBuffer(stagingBuffer.getBuffer(), meshIdxBuffer->getBuffer(),
+                    bufferSize);
+};
+
 void Geometry::bind(VkCommandBuffer commandBuffer) {
   std::vector<VkBuffer> buffers = {vertexBuffer->getBuffer()};
   VkDeviceSize offsets[] = {0};
@@ -132,6 +156,10 @@ VkDeviceAddress Geometry::getIndexBufferAddress() {
 
 VkDeviceAddress Geometry::getVertexBufferAddress() {
   return vertexBuffer->getAddress();
+}
+
+VkDeviceAddress Geometry::getTriangleToMeshIdxBufferAddress() {
+  return meshIdxBuffer->getAddress();
 }
 
 vector<VkVertexInputBindingDescription>
@@ -193,6 +221,8 @@ void Geometry::Builder::loadModel(const std::string &filePath) {
 
   std::unordered_map<TriangleVertex, uint32_t> uniqueVertices{};
 
+  unsigned int nTrianglesWithCurrentMesh = 0;
+
   for (const auto &shape : shapes) {
     for (const auto &index : shape.mesh.indices) {
       TriangleVertex vertex{};
@@ -232,6 +262,13 @@ void Geometry::Builder::loadModel(const std::string &filePath) {
       }
       indices.push_back(uniqueVertices[vertex]);
     }
+
+    // store number of triangles per mesh
+    MeshIdx idx;
+    idx.data.x = shape.mesh.num_face_vertices.size();
+    nTrianglesWithCurrentMesh += idx.data.x;
+    idx.data.y = nTrianglesWithCurrentMesh;
+    triangleToMeshIdx.push_back(idx);
   }
 }
 } // namespace oray

@@ -55,8 +55,8 @@ void Pipeline::createPipeline(
          "Cannot create graphics pipeline:: no renderPass provided in "
          "configInfo");
 
-  createShaderModule(vertCode, &vertShaderModule);
-  createShaderModule(fragCode, &fragShaderModule);
+  createShaderModule(device, vertCode, &vertShaderModule);
+  createShaderModule(device, fragCode, &fragShaderModule);
 
   VkPipelineShaderStageCreateInfo shaderStages[2];
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -110,14 +110,14 @@ void Pipeline::createPipeline(
   }
 }
 
-void Pipeline::createShaderModule(const std::vector<char> &code,
+void Pipeline::createShaderModule(Device &deviceRef, const std::vector<char> &code,
                                   VkShaderModule *shaderModule) {
   VkShaderModuleCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   createInfo.codeSize = static_cast<uint32_t>(code.size());
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-  if (vkCreateShaderModule(device.device(), &createInfo, nullptr,
+  if (vkCreateShaderModule(deviceRef.device(), &createInfo, nullptr,
                            shaderModule) != VK_SUCCESS) {
     throw std::runtime_error("error creating shader module!");
   }
