@@ -196,11 +196,8 @@ void Gui::destroyFramebuffers() {
   }
 }
 void Gui::uploadFonts() {
-  VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
-  ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-  device.endSingleTimeCommands(commandBuffer);
+  ImGui_ImplVulkan_CreateFontsTexture();
   vkDeviceWaitIdle(device.device());
-  ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 void Gui::recreateFramebuffers(SwapChain *swapchain) {
